@@ -1,0 +1,70 @@
+/* General styling for the history page */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+h2 {
+    margin-bottom: 20px;
+    font-size: 24px;
+    text-align: center;
+}
+
+/* Table styling */
+.table {
+    width: 100%;
+    margin: 0 auto;
+    border-collapse: collapse;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.table th, .table td {
+    padding: 12px 15px;
+    text-align: left;
+    font-size: 14px;
+    color: #918585;
+}
+
+.table thead {
+    background-color: rgba(30, 42, 69, 1);
+    color: #fff;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.table tbody tr {
+    background-color: #f8f9fa;
+    transition: background-color 0.3s ease;
+}
+
+.table tbody tr:hover {
+    background-color: #e2e6ea;
+}
+
+/* Pagination */
+.pagination {
+    margin-top: 20px;
+    justify-content: center;
+    display: flex;
+}
+
+.pagination a {
+    color: #007bff;
+    padding: 8px 15px;
+    margin: 0 5px;
+    border-radius: 5px;
+    border: 1px solid #007bff;
+    text-decoration: none;
+}
+
+.pagination a:hover {
+    background-color: #007bff;
+    color: white;
+}
+
+.pagination .active {
+    background-color: #007bff;
+    color: white;
+}

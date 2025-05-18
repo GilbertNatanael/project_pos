@@ -1,0 +1,184 @@
+@extends('layouts.app')
+
+@section('styles')
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+@endsection
+
+@section('content')
+<div class="container-fluid">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand">Transaksi</a>
+        </div>
+    </nav>
+
+    <div class="sales-container mt-3">
+        <div class="row">
+            <div class="col-md-8">
+                {{-- Kartu Informasi Transaksi --}}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="date">Date</label>
+                                <input type="date" class="form-control" id="date" name="date" value="{{ date('Y-m-d') }}">
+
+                                <label for="kasir" class="mt-3">Kasir</label>
+                                <input type="text" class="form-control" id="kasir" name="kasir" value="{{ Session::get('username') }}" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="paymentMethod">Payment Method</label>
+                                <select class="form-select" id="paymentMethod" name="paymentMethod">
+                                    <option value="cash">Cash</option>
+                                    <option value="card">Card</option>
+                                    <option value="transfer">Transfer</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Tabel Barang Transaksi --}}
+                <div class="card">
+                    <div class="card-body">
+                        <button class="btn btn-success mb-3" id="btnAdd">Tambah Barang</button>
+
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>No</th>
+                                    <th>Kode</th>
+                                    <th>Nama Barang</th>
+                                    <th>Harga</th>
+                                    <th>Pcs</th>
+                                    <th>Total</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="salesTable">
+                                {{-- Isi dari JS --}}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Sidebar Ringkasan --}}
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="total-display h3 text-center mb-3">0</div>
+                        <div class="form-group mb-2">
+                            <label>Sub Total</label>
+                            <input type="text" class="form-control" id="subTotal" value="0" readonly>
+                        </div>
+                        <div class="form-group mb-2">
+                            <label>Grand Total</label>
+                            <input type="text" class="form-control" id="grandTotal" value="0" readonly>
+                        </div>
+                        <div class="form-group mb-2" id="formCash">
+                            <label>Cash</label>
+                            <input type="text" class="form-control" id="cash">
+                        </div>
+                        <div class="form-group mb-2" id="formChange">
+                            <label>Change</label>
+                            <input type="text" class="form-control" id="change" value="0" readonly>
+                        </div>
+                        <div class="form-group mb-2">
+                            <label>Note</label>
+                            <textarea class="form-control" id="note" rows="3"></textarea>
+                        </div>
+                        <div class="mt-3">
+                            <button class="btn btn-danger w-100 mb-2"><i class="fas fa-times"></i> Cancel</button>
+                            <button class="btn btn-success w-100 btn-process"><i class="fas fa-check"></i> Process Payment</button>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Modal Pilih Barang --}}
+    <div class="modal fade" id="barangModal" tabindex="-1" aria-labelledby="barangModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Pilih Barang</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="closeModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" id="searchInput" placeholder="Cari nama atau kode barang...">
+                        </div>
+                        <div class="col-md-6">
+                            <select class="form-select" id="filterKategori">
+                                <option value="">Semua Kategori</option>
+                                <option value="bangunan">Bangunan</option>
+                                <option value="makanan">Makanan</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Kode</th>
+                                <th>Nama Barang</th>
+                                <th>Harga</th>
+                                <th>Stok</th>
+                                <th>Qty</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelBarang">
+                            @foreach($barang as $item)
+                            <tr data-id="{{ $item->id_barang }}" data-nama="{{ $item->nama_barang }}" data-harga="{{ $item->harga_barang }}" data-stok="{{ $item->jumlah_barang }}">
+                                <td>{{ $item->kode_barang }}</td>
+                                <td>{{ $item->nama_barang }}</td>
+                                <td>{{ number_format($item->harga_barang) }}</td>
+                                <td>{{ $item->jumlah_barang }}</td>
+                                <td class="text-center">
+                                    <button class="btn-decrease px-2 py-1 bg-light border">-</button>
+                                    <span class="qty-val mx-2">1</span>
+                                    <button class="btn-increase px-2 py-1 bg-light border">+</button>
+                                </td>
+                                <td class="text-center">
+                                    <button class="btn btn-primary btn-add-barang">Tambah</button>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Modal Menunggu Pembayaran -->
+<div class="modal fade" id="menungguPembayaranModal" tabindex="-1" aria-labelledby="menungguPembayaranLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content text-center">
+        <div class="modal-header">
+          <h5 class="modal-title w-100" id="menungguPembayaranLabel">Menunggu Pembayaran</h5>
+        </div>
+        <div class="modal-body">
+          <p>Silakan tunggu hingga pembayaran selesai...</p>
+          <div class="d-flex justify-content-center gap-3 mt-4">
+            <button type="button" class="btn btn-success btn-selesai-pembayaran">Selesai</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+@endsection
+
+@section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+@vite(['resources/css/transaksi.css', 'resources/js/transaksi.js'])
+@endsection

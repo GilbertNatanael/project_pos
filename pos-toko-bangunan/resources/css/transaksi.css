@@ -1,0 +1,163 @@
+body {
+    background-color: #f5f5f5;
+}
+.sales-container {
+    max-width: 1200px;
+    margin: 20px auto;
+}
+.card {
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+.card-header {
+    background-color: #fff;
+    border-bottom: 1px solid #eee;
+    padding: 15px 20px;
+}
+.total-display {
+    font-size: 3rem;
+    font-weight: bold;
+    text-align: center;
+    padding: 20px;
+}
+.table th {
+    background-color: #f8f9fa;
+}
+
+.action-buttons button {
+    margin-right: 5px;
+}
+.form-group {
+    margin-bottom: 15px;
+}
+.payment-section {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 5px;
+}
+
+#formCash,
+#formChange {
+    display: none;
+}
+
+.modal.fade {
+    /* Gunakan default Bootstrap agar tidak bentrok */
+    transition: opacity 0.3s ease;
+}
+
+/* Transaction-specific override to preserve sidebar styling */
+
+/* Reset Bootstrap's effect on dropdowns */
+.sidebar-menu .dropdown-menu {
+    position: static !important;
+    float: none !important;
+    width: auto !important;
+    margin-top: 0 !important;
+    background-color: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    transform: none !important;
+    display: none !important; /* Hide by default */
+    padding-left: 20px !important;
+}
+
+/* Restore sidebar dropdown display behavior */
+.sidebar-menu .dropdown.active > .dropdown-menu,
+.sidebar-menu .dropdown:hover .dropdown-menu {
+    display: block !important;
+}
+
+/* Prevent Bootstrap from affecting sidebar links */
+.sidebar-menu a {
+    color: #e6e6e6 !important;
+    text-decoration: none !important;
+    padding: 12px 20px !important;
+    display: flex !important;
+    align-items: center !important;
+    transition: background-color 0.3s !important;
+    font-weight: normal !important;
+    background-image: none !important;
+}
+
+/* Restore hover and active styles */
+.sidebar-menu a:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.sidebar-menu a.active {
+    background-color: #2ec4cc !important;
+    color: white !important;
+    font-weight: bold !important;
+}
+
+/* Remove Bootstrap dropdown arrows */
+.sidebar-menu .dropdown-toggle::after {
+    display: none !important;
+}
+/* Pastikan modal muncul di atas sidebar */
+.sidebar {
+    z-index: 1030 !important;  /* Sidebar tetap di bawah modal */
+}
+
+.modal {
+    z-index: 1050 !important;  /* Modal lebih tinggi dari sidebar */
+}
+
+
+/* Fix link styling inside dropdowns */
+.sidebar-menu .dropdown-menu a {
+    padding: 12px 20px !important;
+}
+
+/* Restore cursor pointer on dropdown toggles */
+.sidebar-menu .dropdown > a {
+    cursor: pointer !important;
+}
+
+/* Fix logout button styles */
+.logout {
+    margin-top: auto !important;
+    padding-top: 20px !important;
+    border-top: 1px solid rgba(255,255,255,0.2) !important;
+}
+
+.logout button.btn.btn-link {
+    color: #e74c3c !important;
+    text-decoration: none !important;
+    display: block !important;
+    font-weight: bold !important;
+    padding: 10px 20px !important;
+    margin: 0 !important; 
+    text-align: left !important;
+    width: 100% !important;
+    background: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+.logout button.btn.btn-link i {
+    margin-right: 10px !important;
+    width: 20px !important;
+    text-align: center !important;
+}
+
+/* Fix for any form elements in the sidebar */
+.sidebar button, 
+.sidebar input, 
+.sidebar select, 
+.sidebar textarea {
+    font-family: 'Arial', sans-serif !important;
+}
+
+/* Perbaiki z-index modal dan backdrop */
+.modal-backdrop {
+    z-index: 1040 !important;
+}
+
+.modal {
+    z-index: 1050 !important;
+}

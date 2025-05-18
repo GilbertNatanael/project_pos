@@ -1,0 +1,301 @@
+/* File: resources/css/barang.css */
+
+/* Pallete Colors */
+:root {
+    --primary-color: rgba(30, 42, 69, 1); /* rgba(30, 42, 69, 255) */
+    --white: #ffffff;
+    --black: #000000;
+    --gray-light: #f1f1f1;
+    --gray-dark: #333333;
+}
+
+/* Global styles for barang page */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+table th, table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+table th {
+    background-color: var(--primary-color);
+    color: var(--white);
+}
+
+/* Button Styles */
+button {
+    background-color: var(--primary-color);
+    color: var(--white);
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.3s, transform 0.3s;
+}
+
+button:hover {
+    background-color: #1e2a45;
+    transform: scale(1.05);
+}
+
+button:focus {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(30, 42, 69, 0.3);
+}
+
+/* Search & Filter Section */
+form {
+    display: flex;
+    justify-content: flex-start;
+    gap: 20px;  /* Menambahkan jarak antar elemen */
+    flex-wrap: wrap; /* Membuat elemen search dan filter responsif */
+    margin-bottom: 20px;
+}
+
+form input, form select {
+    padding: 10px 12px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    width: 250px;  /* Menetapkan lebar input dan select agar lebih rapi */
+    transition: border-color 0.3s;
+}
+
+form input:focus, form select:focus {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+form button {
+    padding: 10px 16px;
+    border-radius: 4px;
+    background-color: var(--primary-color);
+    color: var(--white);
+    transition: all 0.3s ease-in-out;
+}
+
+form button:hover {
+    background-color: #1e2a45;
+    transform: scale(1.05);
+}
+
+/* Table Row Styles */
+tbody tr:nth-child(odd) {
+    background-color: #fafafa;
+}
+
+tbody tr:hover {
+    background-color: var(--primary-color);
+    color: var(--white);
+}
+
+/* Pagination Style */
+.pagination {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.pagination a {
+    padding: 8px 16px;
+    text-decoration: none;
+    color: var(--primary-color);
+    margin: 0 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+}
+
+.pagination a:hover {
+    background-color: var(--primary-color);
+    color: var(--white);
+}
+
+.pagination .active {
+    background-color: var(--primary-color);
+    color: var(--white);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    table th, table td {
+        font-size: 14px;
+        padding: 10px 8px;
+    }
+
+    .container {
+        padding: 1rem;
+    }
+
+    button {
+        width: 100%;
+    }
+
+    .pagination a {
+        padding: 8px 10px;
+        font-size: 14px;
+    }
+
+    /* Form Styles for small screen */
+    form input, form select, form button {
+        width: 100%; /* Membuat elemen lebih responsif */
+        margin-bottom: 10px;
+    }
+
+    form {
+        gap: 10px;
+    }
+}
+/* Style for the "Tambah Barang" button */
+.add-button-container {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 20px; /* Jarak di bawah tombol */
+}
+
+.add-button {
+    background-color: var(--primary-color);
+    color: var(--white);
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 20px;
+    border-radius: 50px;
+    font-size: 16px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-decoration: none; /* Menghilangkan garis bawah pada link */
+}
+
+.add-button:hover {
+    background-color: #1e2a45;
+    transform: translateY(-3px);
+}
+
+.add-button:focus {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(30, 42, 69, 0.3);
+}
+
+.add-button svg {
+    margin-right: 10px; /* Memberikan jarak antara ikon dan teks */
+    width: 20px;
+    height: 20px;
+}
+
+/* Add responsiveness for mobile */
+@media (max-width: 768px) {
+    .add-button {
+        width: 100%; /* Tombol penuh lebar pada layar kecil */
+        justify-content: center; /* Menyusun ikon dan teks di tengah */
+    }
+}
+
+/* ... (tetap gunakan deklarasi root dan style sebelumnya) ... */
+
+/* Table Column Styling: Lebar kolom disesuaikan */
+table th:nth-child(1),
+table td:nth-child(1) {
+    width: 15%;
+}
+table th:nth-child(2),
+table td:nth-child(2) {
+    width: 30%;
+}
+table th:nth-child(3),
+table td:nth-child(3),
+table th:nth-child(4),
+table td:nth-child(4) {
+    width: 15%;
+}
+table th:nth-child(5),
+table td:nth-child(5) {
+    width: 15%;
+}
+
+/* Table Row Hover: Warna abu-abu */
+tbody tr:hover {
+    background-color: #e2e8f0; /* warna abu-abu terang */
+    color: var(--black);
+}
+
+/* File: resources/css/barang.css */
+.action-icons {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.action-icons a,
+.action-icons form button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    color: var(--primary-color);
+    transition: transform 0.2s;
+}
+
+.action-icons a:hover,
+.action-icons form button:hover {
+    transform: scale(1.2);
+    color: #1e2a45;
+}
+
+.action-icons i {
+    font-size: 18px;
+}
+
+.edit-button,
+.delete-button {
+    background-color: var(--primary-color);
+    color: var(--white);
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    display: inline-block;
+    transition: background-color 0.3s, transform 0.3s;
+}
+
+.edit-button:hover,
+.delete-button:hover {
+    background-color: #1e2a45;
+    transform: scale(1.05);
+}
+
+form.inline-button {
+    margin: 0; /* menghilangkan margin default */
+}
+
+.alert {
+    padding: 15px;
+    border-radius: 5px;
+    font-size: 16px;
+    color: white;
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    width: 80%;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: none; /* Initially hidden */
+}
+
+.alert-success {
+    background-color: #28a745;
+}
+
+.alert-error {
+    background-color: #dc3545;
+}
