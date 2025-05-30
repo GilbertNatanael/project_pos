@@ -109,5 +109,10 @@ private function logHistory($id_barang, $aksi)
         'aksi' => $aksi
     ]);
 }
+public function tambahPembelian()
+{
+    $barang = Barang::orderBy('nama_barang')->get();
+    return view('pembelian.tambah', compact('barang'));
+}
 
 }

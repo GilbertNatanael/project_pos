@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<a href="{{ route('barang.index') }}" class="btn btn-secondary kembali-btn">
+<a href="{{ route('barang') }}" class="btn btn-secondary kembali-btn">
     <i class="bi bi-arrow-left"></i> Kembali
 </a>
 <div class="container">

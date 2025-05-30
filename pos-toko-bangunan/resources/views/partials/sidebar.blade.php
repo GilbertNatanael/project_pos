@@ -20,7 +20,7 @@
         <li><a href="{{ route('transaksi') }}" class="{{ request()->is('transaksi*') ? 'active' : '' }}"><i>💰</i> Transaksi</a></li>
 
         @if(session('role') === 'owner')
-        <li><a href="{{ route('pembelian.index') }}" class="{{ request()->is('pembelian*') ? 'active' : '' }}"><i>🛒</i> Pembelian</a></li>
+        <li><a href="{{ route('pembelian') }}" class="{{ request()->is('pembelian/pembelian') ? 'active' : '' }}"><i>🛒</i> Pembelian</a></li>
         <li><a href="{{ route('prediksi') }}" class="{{ request()->is('prediksi*') ? 'active' : '' }}"><i>📈</i> Prediksi</a></li>
         <li><a href="{{ route('laporan') }}" class="{{ request()->is('laporan*') ? 'active' : '' }}"><i>📋</i> Laporan</a></li>
         <li><a href="{{ route('history') }}" class="{{ request()->is('history*') ? 'active' : '' }}"><i>🕘</i> History</a></li>

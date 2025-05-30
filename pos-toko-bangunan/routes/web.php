@@ -33,18 +33,12 @@ Route::resource('karyawan', KaryawanController::class)->except(['index', 'update
 Route::get('/transaksi', [BarangController::class, 'transaksi'])->name('transaksi');
 Route::post('/transaksi/store', [TransaksiController::class, 'store'])->name('transaksi.store');
 
-
-// Pembelian
-Route::get('/pembelian', [PembelianController::class, 'index'])->name('pembelian.index');
-Route::get('/pembelian/create', [PembelianController::class, 'create'])->name('pembelian.create'); // ← Tambahkan ini
-Route::post('/pembelian/store', [PembelianController::class, 'store'])->name('pembelian.store');
-
-
 // Prediksi
 Route::get('/prediksi', fn () => view('prediksi'))->name('prediksi');
 
 // Laporan
-Route::get('/laporan', fn () => view('laporan'))->name('laporan');
+Route::get('/laporan', [TransaksiController::class, 'laporan'])->name('laporan');
+Route::get('/laporan/{id}/detail', [TransaksiController::class, 'detail']);
 
 // History
 Route::get('/history', [HistoryController::class, 'index'])->name('history');
@@ -52,3 +46,15 @@ Route::get('/history', [HistoryController::class, 'index'])->name('history');
 // Create Views (Form Tambah)
 Route::get('/master/create/create_barang', fn () => view('master.create.create_barang'))->name('create_barang');
 Route::get('/master/create/create_karyawan', fn () => view('master.create.create_karyawan'))->name('create_karyawan');
+
+// Pembelian - Menampilkan daftar pembelian
+Route::get('/pembelian', [PembelianController::class, 'index'])->name('pembelian');
+
+// Tambah Pembelian - View ambil data dari BarangController
+Route::get('/pembelian/tambah', [BarangController::class, 'tambahPembelian'])->name('pembelian.tambah');
+
+// Simpan Pembelian
+Route::post('/pembelian/simpan', [PembelianController::class, 'simpan'])->name('pembelian.simpan');
+Route::get('/pembelian/{id}/detail', [PembelianController::class, 'detail']);
+
+

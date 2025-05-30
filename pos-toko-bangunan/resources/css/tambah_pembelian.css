@@ -1,0 +1,172 @@
+/* File: tambah_pembelian.css */
+
+body {
+    background-color: #f5f7fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #34495e;
+    margin: 0;
+    padding: 0;
+}
+
+.tambah-pembelian-container {
+    max-width: 1200px;
+    margin: 30px auto;
+    padding: 0 15px;
+}
+
+.card {
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.1);
+    margin-bottom: 25px;
+    border: none;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-header {
+    background-color: #fff;
+    border-bottom: 1px solid #eaecef;
+    padding: 18px 25px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #2c3e50;
+    border-radius: 12px 12px 0 0;
+}
+
+.card-body {
+    padding: 20px 25px;
+    flex-grow: 1;
+}
+
+/* Tabel Daftar Barang dan Keranjang */
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 8px;
+}
+
+thead th {
+    background-color: #f6f8fa;
+    color: #7f8c8d;
+    font-weight: 600;
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+}
+
+tbody tr {
+    background-color: #fff;
+    transition: background-color 0.25s ease;
+    box-shadow: 0 2px 6px rgb(0 0 0 / 0.05);
+    cursor: default;
+    border-radius: 8px;
+}
+
+tbody tr:hover {
+    background-color: #e8f0fe;
+    cursor: pointer;
+}
+
+tbody td {
+    padding: 12px 15px;
+    vertical-align: middle;
+    border: none;
+}
+
+/* Specific IDs */
+#daftarBarang tbody tr:hover {
+    background-color: #dbe9ff;
+    cursor: pointer;
+}
+
+#keranjangPembelian input[type=number] {
+    width: 60px;
+    text-align: center;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 0.95rem;
+    color: #34495e;
+    background-color: #fefefe;
+}
+
+#keranjangPembelian input[readonly] {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+}
+
+button {
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+    cursor: pointer;
+    border: none;
+}
+
+button.btn-success {
+    background-color: #27ae60;
+    color: white;
+}
+
+button.btn-success:hover:not(:disabled) {
+    background-color: #219150;
+}
+
+button.btn-danger {
+    background-color: rgba(30, 42, 69, 1);
+    color: white;
+}
+
+button.btn-danger:hover:not(:disabled) {
+    background-color: rgba(30, 42, 69, 1);
+}
+
+button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+/* Total Harga */
+#totalHarga {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+/* Layout kanan bawah */
+.d-grid {
+    display: grid;
+    grid-gap: 10px;
+}
+
+/* Responsive tweak */
+@media (max-width: 768px) {
+    .tambah-pembelian-container .row {
+        flex-direction: column;
+    }
+
+    .col-md-7, .col-md-5 {
+        max-width: 100% !important;
+        flex: 1 1 100% !important;
+        margin-bottom: 20px;
+    }
+}
+button.btn-secondary {
+    background-color: var(--gray-dark);
+    color: var(--white);
+    border: none;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button.btn-secondary:hover:not(:disabled) {
+    background-color: #222222; /* warna abu-abu lebih gelap saat hover */
+}

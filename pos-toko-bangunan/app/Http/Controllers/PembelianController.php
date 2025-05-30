@@ -2,58 +2,83 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Pembelian;
-use App\Models\DetailPembelian;
-use App\Models\Barang;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Models\Pembelian;
+use App\Models\DetailPembelian;
+use Carbon\Carbon;
+
 class PembelianController extends Controller
 {
-    public function index()
-    {
-        $pembelian = Pembelian::with('detail.barang')->orderBy('tanggal_waktu', 'desc')->get();
-        return view('pembelian.index', compact('pembelian'));
+public function index(Request $request)
+{
+    if ($request->ajax()) {
+        $pembelian = Pembelian::with('detailPembelian')
+            ->orderByDesc('tanggal')
+            ->get()
+            ->map(function ($p) {
+                return [
+                    'id' => $p->id_pembelian,
+                    'tanggal' => date('Y-m-d', strtotime($p->tanggal)),
+                    'total_item' => $p->detailPembelian->sum('jumlah'),
+                    'total_harga' => number_format($p->total, 0, ',', '.'),
+                ];
+            });
+
+        return response()->json(['data' => $pembelian]);
     }
 
-    public function create()
+    return view('pembelian.pembelian');
+}
+    public function tambah()
     {
-        $barang = Barang::orderBy('nama_barang')->get();
-        return view('pembelian.create', compact('barang'));
+        $barang = DB::table('barang')->get();
+        return view('pembelian.tambah_pembelian', compact('barang'));
     }
 
-    public function store(Request $request)
+    public function simpan(Request $request)
     {
-        $request->validate([
-            'id_barang.*' => 'required|exists:barang,id_barang',
-            'jumlah.*' => 'required|integer|min:1'
+        $data = $request->validate([
+            'items' => 'required|array',
+            'items.*.id' => 'required|integer|exists:barang,id_barang',
+            'items.*.nama' => 'required|string',
+            'items.*.qty' => 'required|integer|min:1',
+            'items.*.harga' => 'required|numeric|min:0',
+            'total' => 'required|numeric|min:0'
         ]);
 
         DB::beginTransaction();
         try {
-            $pembelian = Pembelian::create(); // tanggal otomatis
+            $pembelian = Pembelian::create([
+                'tanggal' => now(),
+                'jumlah_item' => count($data['items']),
+                'total' => $data['total'],
+            ]);
 
-            foreach ($request->id_barang as $index => $id_barang) {
-                $jumlah = $request->jumlah[$index];
-
+            foreach ($data['items'] as $item) {
                 DetailPembelian::create([
                     'id_pembelian' => $pembelian->id_pembelian,
-                    'id_barang' => $id_barang,
-                    'jumlah' => $jumlah
+                    'id_barang' => $item['id'],
+                    'nama_barang' => $item['nama'],
+                    'jumlah' => $item['qty'],
+                    'subtotal' => $item['qty'] * $item['harga'],
                 ]);
 
-                // Tambah stok barang
-                $barang = Barang::find($id_barang);
-                $barang->increment('jumlah_barang', $jumlah);
+                DB::table('barang')->where('id_barang', $item['id'])->increment('jumlah_barang', $item['qty']);
             }
 
             DB::commit();
-            return redirect()->route('pembelian.index')->with('success', 'Pembelian berhasil disimpan.');
+            return response()->json(['status' => 'success']);
         } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', 'Gagal menyimpan pembelian.');
+            DB::rollback();
+            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
     }
+public function detail($id)
+{
+    $details = DetailPembelian::where('id_pembelian', $id)->get();
+    return response()->json($details);
 }
 
-
+}
 

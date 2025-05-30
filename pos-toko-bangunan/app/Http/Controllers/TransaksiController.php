@@ -62,5 +62,11 @@ class TransaksiController extends Controller
         ], 500);
     }
 }
+public function laporan()
+{
+    $transaksi = Transaksi::orderBy('tanggal_waktu', 'desc')->get();
+    return view('laporan', compact('transaksi'));
+}
+
 
 }

@@ -25,7 +25,7 @@
     </div>
 
     <div class="flex items-center gap-4 mb-4">
-        <form method="GET" action="{{ route('karyawan.index') }}" class="flex items-center gap-2 w-full">
+        <form method="GET" action="{{ route('karyawan') }}" class="flex items-center gap-2 w-full">
             <input type="text" name="search" placeholder="Cari username..." value="{{ request('search') }}" class="border border-gray-300 rounded px-3 py-2 w-full" />
             <select name="filter" class="border border-gray-300 rounded px-3 py-2">
                 <option value="">Semua</option>

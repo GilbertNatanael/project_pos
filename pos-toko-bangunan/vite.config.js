@@ -24,7 +24,13 @@ export default defineConfig({
                 'resources/js/prediksi.js',
                 'resources/css/prediksi.css',
                 'resources/js/history.js',
-                'resources/css/history.css'
+                'resources/css/history.css',
+                'resources/js/pembelian.js',
+                'resources/css/pembelian.css',
+                'resources/js/tambah_pembelian.js',
+                'resources/css/tambah_pembelian.css',
+                'resources/js/laporan.js',
+                'resources/css/laporan.css'
             ],
             refresh: true,
         }),
