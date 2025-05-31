@@ -8,6 +8,7 @@ use App\Http\Controllers\TransaksiController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HistoryController;
 use App\Http\Controllers\PembelianController;
+use App\Http\Controllers\SalesForecastController;
 
 Route::get('/', fn () => redirect()->route('login'));
 
@@ -33,8 +34,6 @@ Route::resource('karyawan', KaryawanController::class)->except(['index', 'update
 Route::get('/transaksi', [BarangController::class, 'transaksi'])->name('transaksi');
 Route::post('/transaksi/store', [TransaksiController::class, 'store'])->name('transaksi.store');
 
-// Prediksi
-Route::get('/prediksi', fn () => view('prediksi'))->name('prediksi');
 
 // Laporan
 Route::get('/laporan', [TransaksiController::class, 'laporan'])->name('laporan');
@@ -58,3 +57,9 @@ Route::post('/pembelian/simpan', [PembelianController::class, 'simpan'])->name('
 Route::get('/pembelian/{id}/detail', [PembelianController::class, 'detail']);
 
 
+
+Route::get('/forecast', [SalesForecastController::class, 'index'])->name('forecast.index');
+Route::post('/api/forecast/single', [SalesForecastController::class, 'predictSingle']);
+Route::post('/api/forecast/all', [SalesForecastController::class, 'predictAll']);
+
+Route::get('/transaksi/detail/{id}', [TransaksiController::class, 'getDetail']);

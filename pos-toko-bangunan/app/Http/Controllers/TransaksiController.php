@@ -67,6 +67,11 @@ public function laporan()
     $transaksi = Transaksi::orderBy('tanggal_waktu', 'desc')->get();
     return view('laporan', compact('transaksi'));
 }
+public function getDetail($id)
+{
+    $transaksi = Transaksi::with(['detailTransaksi.barang'])->findOrFail($id);
+    return response()->json($transaksi);
+}
 
 
 }

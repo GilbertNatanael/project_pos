@@ -12,6 +12,8 @@
     @yield('styles')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha512-RXf+QSDCUQs6zKbUz8zZAw7M9s6Q9Jv4QkOW6D2qG0t/IlzQynKM2CJFPFfxf8kXf2L6W4j0aOykh8a1pT9UFg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
 </head>
@@ -33,4 +35,5 @@
     @yield('scripts')
 </body>
 </html>
+
 

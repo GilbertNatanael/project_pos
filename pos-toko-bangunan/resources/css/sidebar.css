@@ -12,93 +12,192 @@
     min-height: 100vh;
 }
 
-/* Sidebar */
+/* Sidebar - Isolate from Bootstrap with higher specificity */
 .sidebar {
-    width: 240px;
-    background-color: #1e2a45;
-    color: white;
-    padding: 20px 0;
-    display: flex;
-    flex-direction: column;
+    all: unset;
+    width: 240px !important;
+    background-color: #1e2a45 !important;
+    color: white !important;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 100vh !important;
+    position: fixed !important; /* Make sidebar fixed */
+    top: 0 !important;
+    left: 0 !important;
+    z-index: 1000 !important;
+    /* Reset Bootstrap container styles */
+    max-width: none !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important; /* Prevent sidebar from scrolling */
 }
 
-/* Main Content */
+/* Prevent Bootstrap from affecting sidebar content */
+.sidebar * {
+    box-sizing: border-box !important;
+}
+
+/* Main Content - Add left margin to account for fixed sidebar */
 .main-content {
     flex-grow: 1;
     padding: 20px;
     background-color: #f5f5f5;
+    margin-left: 240px; /* Account for fixed sidebar width */
+    width: calc(100% - 240px);
 }
 
-
-.sidebar-header {
-    padding: 0 20px 20px 20px;
-    font-size: 1.2rem;
-    font-weight: bold;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    margin-bottom: 20px;
+.sidebar .sidebar-header {
+    padding: 20px 20px 20px 20px !important;
+    font-size: 1.2rem !important;
+    font-weight: bold !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    margin-bottom: 0 !important;
+    color: white !important;
+    flex-shrink: 0 !important; /* Prevent header from shrinking */
 }
 
-.sidebar-menu {
-    list-style: none;
-    padding: 0;
+/* Scrollable menu container */
+.sidebar-menu-container {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    padding: 20px 0 !important;
+    /* Custom scrollbar styling */
+    scrollbar-width: thin !important;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent !important;
 }
 
-.sidebar-menu li {
-    margin-bottom: 8px;
+/* Webkit scrollbar styling */
+.sidebar-menu-container::-webkit-scrollbar {
+    width: 6px !important;
 }
 
-.sidebar-menu a {
-    color: #e6e6e6;
-    text-decoration: none;
-    padding: 12px 20px;
-    display: flex;
-    align-items: center;
-    transition: background-color 0.3s;
+.sidebar-menu-container::-webkit-scrollbar-track {
+    background: transparent !important;
 }
 
-.sidebar-menu a:hover, .sidebar-menu a.active {
-    background-color: rgba(255, 255, 255, 0.1);
+.sidebar-menu-container::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3) !important;
+    border-radius: 3px !important;
 }
 
-.sidebar-menu a i {
-    margin-right: 10px;
-    width: 20px;
-    text-align: center;
+.sidebar-menu-container::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.5) !important;
 }
 
-/* Dropdown menu */
-.sidebar-menu .dropdown-menu {
-    display: none;
-    list-style: none;
-    padding-left: 20px;
+/* Reset Bootstrap list styles for sidebar */
+.sidebar .sidebar-menu {
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    /* Override Bootstrap list styles */
+    padding-left: 0 !important;
+    margin-bottom: 0 !important;
 }
+
+.sidebar .sidebar-menu li {
+    margin-bottom: 8px !important;
+    list-style: none !important;
+    /* Override Bootstrap list item styles */
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+}
+
+/* Sidebar links - Override Bootstrap link styles */
+.sidebar .sidebar-menu a {
+    color: #e6e6e6 !important;
+    text-decoration: none !important;
+    padding: 12px 20px !important;
+    display: flex !important;
+    align-items: center !important;
+    transition: background-color 0.3s !important;
+    /* Override Bootstrap link styles */
+    border: none !important;
+    background: none !important;
+    width: 100% !important;
+    text-align: left !important;
+    font-size: inherit !important;
+    line-height: inherit !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+.sidebar .sidebar-menu a:hover, 
+.sidebar .sidebar-menu a.active {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: white !important;
+    text-decoration: none !important;
+}
+
+.sidebar .sidebar-menu a i {
+    margin-right: 10px !important;
+    width: 20px !important;
+    text-align: center !important;
+}
+
+/* Dropdown menu - Override Bootstrap dropdown styles */
+.sidebar .sidebar-menu .dropdown-menu {
+    display: none !important;
+    list-style: none !important;
+    padding-left: 20px !important;
+    /* Override Bootstrap dropdown styles */
+    position: static !important;
+    float: none !important;
+    width: auto !important;
+    margin: 0 !important;
+    font-size: inherit !important;
+    text-align: left !important;
+    background-color: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    min-width: auto !important;
+}
+
 /* Mengatasi border kotak yang tidak diinginkan */
-.sidebar-menu .dropdown-menu {
-    border: none;
-    box-shadow: none;
+.sidebar .sidebar-menu .dropdown-menu {
+    border: none !important;
+    box-shadow: none !important;
 }
+
 /* Menambahkan tampilan dropdown ketika item aktif */
-.sidebar-menu .dropdown.active > .dropdown-menu {
-    display: block;
+.sidebar .sidebar-menu .dropdown.active > .dropdown-menu {
+    display: block !important;
 }
+
 /* Menampilkan dropdown menu ketika hover */
-.sidebar-menu .dropdown:hover .dropdown-menu {
-    display: block;
+.sidebar .sidebar-menu .dropdown:hover .dropdown-menu {
+    display: block !important;
 }
 
-
-.sidebar-menu .dropdown > a {
-    cursor: pointer;
+.sidebar .sidebar-menu .dropdown > a {
+    cursor: pointer !important;
 }
 
-/* Fix logout button styles */
-.logout {
-    margin-top: auto !important;
-    padding-top: 20px !important;
+/* Dropdown menu items */
+.sidebar .sidebar-menu .dropdown-menu li {
+    margin-bottom: 0 !important;
+}
+
+.sidebar .sidebar-menu .dropdown-menu a {
+    padding: 8px 20px !important;
+    font-size: 0.9rem !important;
+    color: #cccccc !important;
+}
+
+.sidebar .sidebar-menu .dropdown-menu a:hover {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    color: white !important;
+}
+
+/* Fix logout button styles - Override Bootstrap button styles */
+.sidebar .logout {
+    flex-shrink: 0 !important; /* Prevent logout section from shrinking */
+    padding: 20px 0 20px 0 !important;
     border-top: 1px solid rgba(255,255,255,0.2) !important;
+    background-color: #1e2a45 !important; /* Ensure background matches sidebar */
 }
 
-.logout button.btn.btn-link {
+.sidebar .logout button.btn.btn-link {
     color: #e74c3c !important;
     text-decoration: none !important;
     display: block !important;
@@ -111,17 +210,51 @@
     border: none !important;
     border-radius: 0 !important;
     box-shadow: none !important;
+    /* Override Bootstrap button styles */
+    font-size: inherit !important;
+    line-height: inherit !important;
+    cursor: pointer !important;
 }
 
-.logout button.btn.btn-link i {
+.sidebar .logout button.btn.btn-link:hover,
+.sidebar .logout button.btn.btn-link:focus,
+.sidebar .logout button.btn.btn-link:active {
+    color: #c0392b !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    text-decoration: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+.sidebar .logout button.btn.btn-link i {
     margin-right: 10px !important;
     width: 20px !important;
     text-align: center !important;
 }
+
 /* Style untuk item menu yang sedang aktif */
-.sidebar-menu a.active {
-    background-color: #2ec4cc; /* Warna latar belakang item aktif */
-    color: white; /* Warna teks item aktif */
-    font-weight: bold; /* Menebalkan teks item aktif */
+.sidebar .sidebar-menu a.active {
+    background-color: #2ec4cc !important; /* Warna latar belakang item aktif */
+    color: white !important; /* Warna teks item aktif */
+    font-weight: bold !important; /* Menebalkan teks item aktif */
 }
 
+/* Isolate forecast container from sidebar styles */
+.forecast-container {
+    /* Reset any sidebar influence */
+    background: none !important;
+    color: initial !important;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 200px !important;
+    }
+    
+    .main-content {
+        margin-left: 200px !important;
+        width: calc(100% - 200px) !important;
+    }
+}

@@ -1,0 +1,20 @@
+.forecast-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+.results-table {
+    margin-top: 20px;
+}
+.loading {
+    display: none;
+    text-align: center;
+    padding: 20px;
+}
+.chart-container {
+    margin-top: 30px;
+    height: 400px;
+}
+.performance-badge {
+    font-size: 0.8em;
+}

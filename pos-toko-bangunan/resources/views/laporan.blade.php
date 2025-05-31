@@ -1,5 +1,7 @@
 @extends('layouts.app')
-
+@section('styles')
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+@endsection
 @section('content')
 <div class="laporan-container">
     <h2 class="laporan-title">Laporan Transaksi</h2>
@@ -31,6 +33,20 @@
         </div>
     </div>
 </div>
+<!-- Filter Metode Pembayaran -->
+<select id="metode-pembayaran" class="form-control">
+    <option value="">Semua Metode</option>
+    <option value="Cash">Cash</option>
+    <option value="Card">Card</option>
+    <option value="qris">QRIS</option>
+</select>
+
+<!-- Filter Range Harga -->
+<div style="display: flex; gap: 10px; margin-top: 10px;">
+    <input type="number" id="harga-min" placeholder="Harga Min" class="form-control" />
+    <input type="number" id="harga-max" placeholder="Harga Max" class="form-control" />
+</div>
+
     <div class="table-wrapper">
     <table class="laporan-table">
         <thead>
@@ -50,9 +66,10 @@
                     <td>Rp{{ number_format($t->total_harga, 0, ',', '.') }}</td>
                     <td>{{ ucfirst($t->metode_pembayaran) }}</td>
                     <td>
-                        <a href="" class="btn-detail">
+                        <a href="#" class="btn-detail" data-id="{{ $t->id_transaksi }}">
                             <i class="fas fa-eye"></i> Detail
                         </a>
+
                     </td>
                 </tr>
             @empty
@@ -62,6 +79,16 @@
             @endforelse
         </tbody>
     </table>
+</div>
+<!-- Modal Detail Transaksi -->
+<div id="modal-detail" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+        <span class="close-button" id="close-modal">&times;</span>
+        <h3>Detail Transaksi</h3>
+        <div id="detail-body">
+            <!-- Data transaksi & detail transaksi akan di-inject dengan JS -->
+        </div>
+    </div>
 </div>
 
 @endsection
