@@ -33,6 +33,7 @@
                                     <option value="cash">Cash</option>
                                     <option value="card">Card</option>
                                     <option value="transfer">Transfer</option>
+                                    <option value="transfer">QRIS</option>
                                 </select>
                             </div>
                         </div>
@@ -90,9 +91,8 @@
                             <textarea class="form-control" id="note" rows="3"></textarea>
                         </div>
                         <div class="mt-3">
-                            <button class="btn btn-danger w-100 mb-2"><i class="fas fa-times"></i> Cancel</button>
+                            <button class="btn btn-danger w-100 mb-2 btn-cancel"><i class="fas fa-times"></i> Cancel</button>
                             <button class="btn btn-success w-100 btn-process"><i class="fas fa-check"></i> Process Payment</button>
-
                         </div>
                     </div>
                 </div>

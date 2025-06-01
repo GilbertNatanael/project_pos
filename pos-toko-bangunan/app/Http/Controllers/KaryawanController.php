@@ -57,7 +57,7 @@ class KaryawanController extends Controller
             'role' => $request->role,
         ]);
 
-        return redirect()->route('karyawan.index')->with('success', 'Karyawan berhasil ditambahkan.');
+        return redirect()->route('karyawan')->with('success', 'Karyawan berhasil ditambahkan.');
     }
 
     /**
@@ -67,9 +67,9 @@ class KaryawanController extends Controller
     {
         $karyawan = Karyawan::findOrFail($id);
 
-        // Validasi data
+        // Validasi data - Fixed table name from 'karyawans' to 'karyawan'
         $request->validate([
-            'username' => 'required|unique:karyawans,username,' . $karyawan->id_karyawan,
+            'username' => 'required|unique:karyawan,username,' . $karyawan->id_karyawan . ',id_karyawan',
             'password' => 'nullable|min:6',
             'role' => 'required|in:owner,karyawan',
         ]);
@@ -81,7 +81,7 @@ class KaryawanController extends Controller
         $karyawan->role = $request->role;
         $karyawan->save();
 
-        return redirect()->route('karyawan.index')->with('success', 'Karyawan berhasil diperbarui.');
+        return redirect()->route('karyawan')->with('success', 'Karyawan berhasil diperbarui.');
     }
 
     /**
@@ -92,6 +92,6 @@ class KaryawanController extends Controller
         $karyawan = Karyawan::findOrFail($id);
         $karyawan->delete();
 
-        return redirect()->route('karyawan.index')->with('success', 'Karyawan berhasil dihapus.');
+        return redirect()->route('karyawan')->with('success', 'Karyawan berhasil dihapus.');
     }
 }

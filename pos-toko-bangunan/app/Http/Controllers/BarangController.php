@@ -53,7 +53,7 @@ class BarangController extends Controller
 
         $this->logHistory($barang->id_barang, 'tambah');
 
-        return redirect()->route('barang.index')->with('success', 'Barang berhasil ditambahkan.');
+        return redirect()->route('barang')->with('success', 'Barang berhasil ditambahkan.');
     }
 
     public function update(Request $request, string $id)
@@ -68,7 +68,7 @@ class BarangController extends Controller
         $barang = Barang::find($id);
 
         if (!$barang) {
-            return redirect()->route('barang.index')->with('error', 'Barang tidak ditemukan.');
+            return redirect()->route('barang')->with('error', 'Barang tidak ditemukan.');
         }
 
         $barang->kode_barang = $request->kode_barang;
@@ -79,7 +79,7 @@ class BarangController extends Controller
 
         $this->logHistory($barang->id_barang, 'update');
 
-        return redirect()->route('barang.index')->with('success', 'Barang berhasil diperbarui.');
+        return redirect()->route('barang')->with('success', 'Barang berhasil diperbarui.');
     }
 
     public function destroy(string $id)
@@ -87,13 +87,13 @@ class BarangController extends Controller
         $barang = Barang::find($id);
 
         if (!$barang) {
-            return redirect()->route('barang.index')->with('error', 'Barang tidak ditemukan.');
+            return redirect()->route('barang')->with('error', 'Barang tidak ditemukan.');
         }
 
         $this->logHistory($barang->id_barang, 'hapus');
         $barang->delete();
 
-        return redirect()->route('barang.index')->with('success', 'Barang berhasil dihapus.');
+        return redirect()->route('barang')->with('success', 'Barang berhasil dihapus.');
     }
 
     // ✅ Method bantu untuk mencatat history

@@ -58,6 +58,7 @@ window.predictAll = async function () {
         if (data.error) throw new Error(data.error);
 
         displayAllResults(data);
+        createChartAll(data);
 
     } catch (error) {
         console.error('Error:', error);
@@ -67,34 +68,16 @@ window.predictAll = async function () {
     }
 };
 
-function showLoading(show) {
-    document.getElementById('loading').style.display = show ? 'block' : 'none';
-}
-
-function showError(message) {
-    const resultsDiv = document.getElementById('results');
-    resultsDiv.innerHTML = `
-        <div class="alert alert-danger" role="alert">
-            <h4 class="alert-heading">Error!</h4>
-            <p>${message}</p>
-        </div>
-    `;
-}
-
 function displaySingleResult(data) {
     const resultsDiv = document.getElementById('results');
-    const mape = data.model_performance.mape;
-    let performanceClass = 'success';
-    if (mape > 20) performanceClass = 'danger';
-    else if (mape > 10) performanceClass = 'warning';
+
+    // Hitung total prediksi, bulat & minimal 0
+    const totalPredicted = data.predictions.reduce((sum, p) => sum + Math.max(0, Math.round(p.predicted_quantity)), 0);
 
     let html = `
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5>🎯 Forecast Results for: ${data.item_name}</h5>
-                <span class="badge bg-${performanceClass} performance-badge">
-                    MAPE: ${mape.toFixed(2)}%
-                </span>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -103,18 +86,17 @@ function displaySingleResult(data) {
                             <tr>
                                 <th>📅 Date</th>
                                 <th>📦 Predicted Quantity</th>
-                                <th>📊 Confidence Range</th>
                             </tr>
                         </thead>
                         <tbody>
     `;
 
     data.predictions.forEach(pred => {
+        const qty = Math.max(0, Math.round(pred.predicted_quantity));
         html += `
             <tr>
                 <td><strong>${pred.date}</strong></td>
-                <td><span class="badge bg-primary">${pred.predicted_quantity.toFixed(2)}</span></td>
-                <td><small class="text-muted">${pred.lower_bound.toFixed(2)} - ${pred.upper_bound.toFixed(2)}</small></td>
+                <td><span class="badge bg-primary">${qty}</span></td>
             </tr>
         `;
     });
@@ -123,23 +105,17 @@ function displaySingleResult(data) {
                         </tbody>
                     </table>
                 </div>
-                <div class="row mt-3">
-                    <div class="col-md-4 text-center">
-                        <small class="text-muted">MAE</small>
-                        <div class="fw-bold">${data.model_performance.mae.toFixed(4)}</div>
-                    </div>
-                    <div class="col-md-4 text-center">
-                        <small class="text-muted">RMSE</small>
-                        <div class="fw-bold">${data.model_performance.rmse.toFixed(4)}</div>
-                    </div>
-                    <div class="col-md-4 text-center">
-                        <small class="text-muted">MAPE</small>
-                        <div class="fw-bold text-${performanceClass}">${mape.toFixed(2)}%</div>
-                    </div>
+                <div class="text-end fw-bold mt-3">
+                    Total Predicted Sales: ${totalPredicted}
                 </div>
             </div>
         </div>
     `;
+
+    // Tambahkan informasi stok jika tersedia
+    if (data.stock_info) {
+        html += generateStockInfoCard(data.stock_info, data.item_name);
+    }
 
     resultsDiv.innerHTML = html;
 }
@@ -154,13 +130,13 @@ function displayAllResults(data) {
         if (mape > 20) performanceClass = 'danger';
         else if (mape > 10) performanceClass = 'warning';
 
+        // Hitung total prediksi (bulat & tidak negatif)
+        const totalPredicted = data[item].predictions.reduce((sum, p) => sum + Math.max(0, Math.round(p.predicted_quantity)), 0);
+
         html += `
             <div class="mb-4">
                 <h6 class="d-flex justify-content-between align-items-center">
                     ${item} 
-                    <span class="badge bg-${performanceClass} performance-badge">
-                        MAPE: ${mape.toFixed(2)}%
-                    </span>
                 </h6>
                 <div class="table-responsive">
                     <table class="table table-sm table-striped">
@@ -169,14 +145,189 @@ function displayAllResults(data) {
         `;
 
         data[item].predictions.forEach(pred => {
-            html += `<tr><td>${pred.date}</td><td><span class="badge bg-info">${pred.predicted_quantity.toFixed(2)}</span></td></tr>`;
+            const qty = Math.max(0, Math.round(pred.predicted_quantity));
+            html += `<tr><td>${pred.date}</td><td><span class="badge bg-info">${qty}</span></td></tr>`;
         });
 
-        html += '</tbody></table></div></div>';
+        html += `
+                        </tbody>
+                    </table>
+                </div>
+                <div class="text-end fw-bold">
+                    Total Predicted Sales: ${totalPredicted}
+                </div>
+        `;
+
+        // Tambahkan informasi stok untuk setiap item
+        if (data[item].stock_info) {
+            html += generateStockInfoTable(data[item].stock_info, item);
+        }
+
+        html += '</div>';
     });
 
     html += '</div></div>';
     resultsDiv.innerHTML = html;
+}
+
+function generateStockInfoCard(stockInfo, itemName) {
+    const warningColors = {
+        'out_of_stock': 'danger',
+        'critical': 'danger',
+        'warning': 'warning',
+        'caution': 'info',
+        'safe': 'success',
+        'unknown': 'secondary',
+        'error': 'danger'
+    };
+
+    const warningColor = warningColors[stockInfo.warning_level] || 'secondary';
+
+    return `
+        <div class="card mt-3">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">📊 Stock Analysis for ${itemName}</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span><strong>Stok Saat ini:</strong></span>
+                            <span class="badge bg-primary">${stockInfo.current_stock} units</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span><strong>Kapan Habis:</strong></span>
+                            <span class="badge bg-${warningColor}">
+                                ${stockInfo.days_until_depletion ? stockInfo.days_until_depletion + ' days' : 'Safe'}
+                            </span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span><strong>Estimasi Tanggal Habis:</strong></span>
+                            <span class="badge bg-${warningColor}">
+                                ${stockInfo.depletion_date || 'N/A'}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="alert alert-${warningColor} mb-0">
+                            <strong>Status:</strong><br>
+                            ${stockInfo.message}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function generateStockInfoTable(stockInfo, itemName) {
+    const warningColors = {
+        'out_of_stock': 'danger',
+        'critical': 'danger',
+        'warning': 'warning',
+        'caution': 'info',
+        'safe': 'success',
+        'unknown': 'secondary',
+        'error': 'danger'
+    };
+
+    const warningColor = warningColors[stockInfo.warning_level] || 'secondary';
+
+    return `
+        <div class="mt-3 p-3 border rounded bg-light">
+            <h6 class="text-muted mb-2">📊 Stock Analysis</h6>
+            <div class="row">
+                <div class="col-6">
+                    <small><strong>Current Stock:</strong> <span class="badge bg-primary">${stockInfo.current_stock}</span></small>
+                </div>
+                <div class="col-6">
+                    <small><strong>Days Until Depletion:</strong> 
+                        <span class="badge bg-${warningColor}">
+                            ${stockInfo.days_until_depletion ? stockInfo.days_until_depletion + ' days' : 'Safe'}
+                        </span>
+                    </small>
+                </div>
+            </div>
+            <div class="mt-2">
+                <small class="text-${warningColor}"><strong>${stockInfo.message}</strong></small>
+            </div>
+        </div>
+    `;
+}
+
+function createChartAll(data) {
+    const ctx = document.getElementById('forecast-chart').getContext('2d');
+
+    if (currentChart) {
+        currentChart.destroy();
+    }
+
+    // Ambil tanggal dari item pertama
+    const firstItemKey = Object.keys(data)[0];
+    const labels = data[firstItemKey].predictions.map(p => p.date);
+
+    // Buat dataset per item
+    const colors = [
+        'rgb(75, 192, 192)', 'rgb(255, 99, 132)', 'rgb(255, 206, 86)',
+        'rgb(54, 162, 235)', 'rgb(153, 102, 255)', 'rgb(255, 159, 64)',
+        'rgb(201, 203, 207)'
+    ];
+
+    const datasets = Object.keys(data).map((item, index) => {
+        const color = colors[index % colors.length];
+        return {
+            label: item,
+            data: data[item].predictions.map(p => Math.max(0, Math.round(p.predicted_quantity))),
+            borderColor: color,
+            backgroundColor: color.replace('rgb', 'rgba').replace(')', ', 0.2)'),
+            tension: 0.1,
+            fill: false
+        };
+    });
+
+    currentChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Sales Forecast for All Items'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: { display: true, text: 'Quantity' }
+                },
+                x: {
+                    title: { display: true, text: 'Date' }
+                }
+            }
+        }
+    });
+
+    document.getElementById('chart-section').style.display = 'block';
+}
+
+
+function showLoading(show) {
+    document.getElementById('loading').style.display = show ? 'block' : 'none';
+}
+
+function showError(message) {
+    const resultsDiv = document.getElementById('results');
+    resultsDiv.innerHTML = `
+        <div class="alert alert-danger" role="alert">
+            <h4 class="alert-heading">Error!</h4>
+            <p>${message}</p>
+        </div>
+    `;
 }
 
 function createChart(data) {

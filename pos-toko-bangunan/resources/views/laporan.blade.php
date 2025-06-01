@@ -6,46 +6,85 @@
 <div class="laporan-container">
     <h2 class="laporan-title">Laporan Transaksi</h2>
 
-<div class="laporan-filters">
-    <div class="filter-group">
-        <label for="start-date">Dari:</label>
-        <input type="date" id="start-date">
+<div class="d-flex flex-wrap gap-2 mb-3 align-items-end">
+    <!-- Filter: Tanggal -->
+    <div class="form-group">
+        <label for="start-date">Dari Tanggal</label>
+        <input type="date" id="start-date" name="start_date" class="form-control"
+            value="{{ request('start_date') }}">
     </div>
-    <div class="filter-group">
-        <label for="end-date">Sampai:</label>
-        <input type="date" id="end-date">
+    <div class="form-group">
+        <label for="end-date">Sampai Tanggal</label>
+        <input type="date" id="end-date" name="end_date" class="form-control"
+            value="{{ request('end_date') }}">
     </div>
-    <div class="filter-group search-group">
-        <label for="search-bar">Pencarian:</label>
-        <input type="text" id="search-bar" placeholder="Cari transaksi...">
-    </div>
-    <button class="btn-filter" id="btn-filter">
-        <i class="fas fa-filter"></i> Terapkan
-    </button>
 
-    <div class="dropdown-export">
-        <button class="btn-export-dropdown">
-            <i class="fas fa-file-export"></i> Export
+    <!-- Filter: Keyword -->
+    <div class="form-group flex-grow-1">
+        <label for="search-bar">Cari Transaksi</label>
+        <input type="text" id="search-bar" name="keyword" class="form-control"
+            value="{{ request('keyword') }}" placeholder="ID atau catatan...">
+    </div>
+
+    <!-- Tombol Filter Tambahan -->
+    <div>
+        <button class="btn btn-outline-primary" type="button" id="toggleFilter">
+            <i class="bi bi-funnel-fill"></i> Filter Lanjutan
         </button>
-        <div class="dropdown-menu">
-            <a href="#" id="export-pdf"><i class="fas fa-file-pdf"></i> Export PDF</a>
-            <a href="#" id="export-excel"><i class="fas fa-file-excel"></i> Export Excel</a>
+    </div>
+
+    <!-- Tombol Terapkan -->
+    <div>
+        <button class="btn btn-success" id="filter-button" type="button">
+            <i class="bi bi-check-circle-fill"></i> Terapkan
+        </button>
+    </div>
+
+    <!-- Tambah tombol Reset -->
+<div>
+    <button class="btn btn-secondary" id="reset-button" type="button">
+        <i class="bi bi-arrow-clockwise"></i> Reset Filter
+    </button>
+</div>
+
+</div>
+
+<!-- Filter Tambahan: Hidden by Default -->
+<div id="advanced-filters" class="border rounded p-3 mb-3 bg-light" style="display: none;">
+    <div class="row">
+        <!-- Metode Pembayaran -->
+        <div class="col-md-4 mb-2">
+            <label for="metode-pembayaran">Metode Pembayaran</label>
+            <select id="metode-pembayaran" class="form-select">
+                <option value="" {{ request('metode') == '' ? 'selected' : '' }}>Semua</option>
+                <option value="cash" {{ request('metode') == 'Cash' ? 'selected' : '' }}>Cash</option>
+                <option value="card" {{ request('metode') == 'Card' ? 'selected' : '' }}>Card</option>
+                <option value="qris" {{ request('metode') == 'qris' ? 'selected' : '' }}>QRIS</option>
+            </select>
+        </div>
+
+        <!-- Range Harga -->
+        <div class="col-md-4 mb-2">
+            <label for="harga-min">Harga Minimum</label>
+            <input type="number" id="harga-min" class="form-control" value="{{ request('harga_min') }}" placeholder="Contoh: 10000">
+        </div>
+
+        <div class="col-md-4 mb-2">
+            <label for="harga-max">Harga Maksimum</label>
+            <input type="number" id="harga-max" class="form-control" value="{{ request('harga_max') }}" placeholder="Contoh: 1000000">
         </div>
     </div>
 </div>
-<!-- Filter Metode Pembayaran -->
-<select id="metode-pembayaran" class="form-control">
-    <option value="">Semua Metode</option>
-    <option value="Cash">Cash</option>
-    <option value="Card">Card</option>
-    <option value="qris">QRIS</option>
-</select>
-
-<!-- Filter Range Harga -->
-<div style="display: flex; gap: 10px; margin-top: 10px;">
-    <input type="number" id="harga-min" placeholder="Harga Min" class="form-control" />
-    <input type="number" id="harga-max" placeholder="Harga Max" class="form-control" />
+<div class="d-flex gap-2 mb-3">
+    <select id="export-format" class="form-select w-auto">
+        <option value="excel">Export Excel</option>
+        <option value="pdf">Export PDF</option>
+    </select>
+    <button class="btn btn-outline-dark" id="export-button" type="button">
+        <i class="bi bi-download"></i> Export
+    </button>
 </div>
+
 
     <div class="table-wrapper">
     <table class="laporan-table">

@@ -7,71 +7,194 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use App\Models\Transaksi;
 use App\Models\DetailTransaksi;
+use App\Models\Barang;
+use App\Exports\LaporanExport;
+use Maatwebsite\Excel\Facades\Excel;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class TransaksiController extends Controller
 {
     public function store(Request $request)
-{
-    // Cek apakah admin (karyawan) sudah login
-    $adminId = Session::get('id_karyawan');
-    if (!$adminId) {
-        return response()->json(['error' => 'Unauthorized'], 401);
-    }
-
-    // Validasi input
-    $request->validate([
-        'total_harga' => 'required|numeric',
-        'items' => 'required|array|min:1',
-        'items.*.id_barang' => 'required|integer',
-        'items.*.jumlah' => 'required|integer|min:1',
-        'items.*.subtotal' => 'required|numeric',
-        'metode_pembayaran' => 'required|string',
-        'note' => 'nullable|string', // Validasi untuk note (optional)
-    ]);
-
-    try {
-        DB::beginTransaction();
-
-        // Buat transaksi baru dengan menyertakan note
-        $transaksi = Transaksi::create([
-            'id_admin' => $adminId,
-            'tanggal_waktu' => now(),
-            'total_harga' => $request->total_harga,
-            'metode_pembayaran' => $request->metode_pembayaran,
-            'note' => $request->note, // Menyimpan note
-        ]);
-
-        // Simpan detail_transaksi untuk setiap item
-        foreach ($request->items as $item) {
-            DetailTransaksi::create([
-                'id_transaksi' => $transaksi->id_transaksi,
-                'id_barang' => $item['id_barang'],
-                'jumlah' => $item['jumlah'],
-                'subtotal' => $item['subtotal'],
-            ]);
+    {
+        // Cek apakah admin (karyawan) sudah login
+        $adminId = Session::get('id_karyawan');
+        if (!$adminId) {
+            return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        DB::commit();
+        // Validasi input
+        $request->validate([
+            'total_harga' => 'required|numeric',
+            'items' => 'required|array|min:1',
+            'items.*.id_barang' => 'required|integer',
+            'items.*.jumlah' => 'required|integer|min:1',
+            'items.*.subtotal' => 'required|numeric',
+            'metode_pembayaran' => 'required|string',
+            'note' => 'nullable|string',
+        ]);
 
-        return response()->json(['success' => true, 'transaksi' => $transaksi], 201);
-    } catch (\Exception $e) {
-        DB::rollBack();
-        return response()->json([
-            'error' => 'Transaksi gagal disimpan',
-            'message' => $e->getMessage(),
-        ], 500);
+        try {
+            DB::beginTransaction();
+
+            // Buat transaksi baru
+            $transaksi = Transaksi::create([
+                'id_admin' => $adminId,
+                'tanggal_waktu' => now(),
+                'total_harga' => $request->total_harga,
+                'metode_pembayaran' => $request->metode_pembayaran,
+                'note' => $request->note,
+            ]);
+
+            // Simpan detail transaksi & kurangi stok barang
+            foreach ($request->items as $item) {
+                // Simpan detail transaksi
+                DetailTransaksi::create([
+                    'id_transaksi' => $transaksi->id_transaksi,
+                    'id_barang' => $item['id_barang'],
+                    'jumlah' => $item['jumlah'],
+                    'subtotal' => $item['subtotal'],
+                ]);
+
+                // Kurangi stok barang
+                $barang = Barang::find($item['id_barang']);
+                if ($barang) {
+                    if ($barang->jumlah_barang < $item['jumlah']) {
+                        throw new \Exception("Stok barang '{$barang->nama_barang}' tidak mencukupi.");
+                    }
+                    $barang->jumlah_barang -= $item['jumlah'];
+                    $barang->save();
+                } else {
+                    throw new \Exception("Barang dengan ID {$item['id_barang']} tidak ditemukan.");
+                }
+            }
+
+            DB::commit();
+
+            return response()->json(['success' => true, 'transaksi' => $transaksi], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'error' => 'Transaksi gagal disimpan',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
     }
-}
-public function laporan()
+
+    public function laporan(Request $request)
+    {
+        $query = Transaksi::query();
+
+        // Filter tanggal
+        if ($request->filled('start_date')) {
+            $query->whereDate('tanggal_waktu', '>=', $request->start_date);
+        }
+        if ($request->filled('end_date')) {
+            $query->whereDate('tanggal_waktu', '<=', $request->end_date);
+        }
+
+        // Filter keyword (ID atau catatan)
+        if ($request->filled('keyword')) {
+            $keyword = $request->keyword;
+            $query->where(function ($q) use ($keyword) {
+                $q->where('id_transaksi', 'like', "%$keyword%")
+                  ->orWhere('note', 'like', "%$keyword%");
+            });
+        }
+
+        // Filter metode pembayaran
+        if ($request->filled('metode')) {
+            $query->where('metode_pembayaran', $request->metode);
+        }
+
+        // Filter range harga
+        if ($request->filled('harga_min')) {
+            $query->where('total_harga', '>=', $request->harga_min);
+        }
+        if ($request->filled('harga_max')) {
+            $query->where('total_harga', '<=', $request->harga_max);
+        }
+
+        $transaksi = $query->orderBy('tanggal_waktu', 'desc')->get();
+
+        return view('laporan', compact('transaksi'));
+    }
+
+    public function getDetail($id)
+    {
+        $transaksi = Transaksi::with(['detailTransaksi.barang'])->findOrFail($id);
+        return response()->json($transaksi);
+    }
+
+    // Method untuk export Excel dengan detail lengkap
+    public function exportExcel(Request $request)
 {
-    $transaksi = Transaksi::orderBy('tanggal_waktu', 'desc')->get();
-    return view('laporan', compact('transaksi'));
-}
-public function getDetail($id)
-{
-    $transaksi = Transaksi::with(['detailTransaksi.barang'])->findOrFail($id);
-    return response()->json($transaksi);
+    $filters = $this->extractFilters($request);
+    
+    // Buat nama file dengan format sederhana
+    $filename = 'laporan_penjualan_' . now()->format('d-m-Y') . '.xlsx';
+    
+    return Excel::download(new LaporanExport($filters), $filename);
 }
 
+// Method untuk export PDF dengan detail lengkap
+public function exportPdf(Request $request)
+{
+    $filters = $this->extractFilters($request);
 
+    $query = Transaksi::with(['detailTransaksi.barang']);
+
+    // Apply filters
+    if (!empty($filters['start_date'])) {
+        $query->whereDate('tanggal_waktu', '>=', $filters['start_date']);
+    }
+    if (!empty($filters['end_date'])) {
+        $query->whereDate('tanggal_waktu', '<=', $filters['end_date']);
+    }
+    if (!empty($filters['keyword'])) {
+        $keyword = $filters['keyword'];
+        $query->where(function($q) use ($keyword) {
+            $q->where('id_transaksi', 'like', "%$keyword%")
+              ->orWhere('note', 'like', "%$keyword%");
+        });
+    }
+    if (!empty($filters['metode'])) {
+        $query->where('metode_pembayaran', $filters['metode']);
+    }
+    if (!empty($filters['harga_min'])) {
+        $query->where('total_harga', '>=', $filters['harga_min']);
+    }
+    if (!empty($filters['harga_max'])) {
+        $query->where('total_harga', '<=', $filters['harga_max']);
+    }
+
+    $transaksi = $query->orderBy('tanggal_waktu', 'desc')->get();
+
+    // Set PDF options
+    $pdf = PDF::loadView('laporan.laporan_pdf', compact('transaksi'))
+              ->setPaper('a4', 'portrait')
+              ->setOptions([
+                  'dpi' => 150,
+                  'defaultFont' => 'sans-serif',
+                  'isHtml5ParserEnabled' => true,
+                  'isRemoteEnabled' => true,
+              ]);
+
+    // Buat nama file dengan format sederhana
+    $filename = 'laporan_penjualan_' . now()->format('d-m-Y') . '.pdf';
+    
+    return $pdf->download($filename);
+}
+
+    // Fungsi bantu untuk ekstrak filter dari request
+    private function extractFilters($request)
+    {
+        return [
+            'start_date' => $request->input('start_date'),
+            'end_date' => $request->input('end_date'),
+            'keyword' => $request->input('keyword'),
+            'metode' => $request->input('metode'),
+            'harga_min' => $request->input('harga_min'),
+            'harga_max' => $request->input('harga_max'),
+        ];
+    }
 }

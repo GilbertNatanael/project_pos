@@ -23,6 +23,39 @@ $(document).ready(function () {
         });
     }
 
+    // ==================== Fungsi Reset Lengkap ====================
+    function resetAllTransaction() {
+        // Reset tabel transaksi
+        $('#salesTable').empty();
+        
+        // Reset semua input form
+        $('#cash').val('');
+        $('#note').val('');
+        $('#subTotal').val(0);
+        $('#grandTotal').val(0);
+        $('#change').val(0);
+        
+        // Reset display total
+        $('.total-display').text("0");
+        
+        // Reset payment method ke default (biasanya cash)
+        $('#paymentMethod').val('cash');
+        
+        // Trigger change event untuk payment method (jika ada handler)
+        $('#paymentMethod').trigger('change');
+        
+        // Reset quantity di modal barang ke 1
+        $('#tabelBarang .qty-val').text('1');
+        
+        // Reset search dan filter di modal
+        $('#searchInput').val('');
+        $('#filterKategori').val('');
+        $('#tabelBarang tr').show();
+        
+        // Recalculate totals (akan menghasilkan 0)
+        calculateTotals();
+    }
+
     $('#cash').on('input', calculateTotals);
 
     // ==================== Modal Barang ====================
@@ -165,7 +198,7 @@ $(document).ready(function () {
                 <td>
                     <input type="hidden" class="form-stok" value="${stok}">
                     <button class="btn btn-sm btn-save">Simpan</button>
-                    <button class="btn btn-sm btn-cancel">Batal</button>
+                    <button class="btn btn-sm btn-cancel-edit">Batal</button>
                 </td>
             </tr>
         `;
@@ -198,7 +231,7 @@ $(document).ready(function () {
         calculateTotals();
     });
 
-    $(document).on('click', '.btn-cancel', function () {
+    $(document).on('click', '.btn-cancel-edit', function () {
         const formRow = $(this).closest('tr');
         const originalRow = formRow.prev();
         formRow.remove();
@@ -219,107 +252,99 @@ $(document).ready(function () {
     $('#paymentMethod').on('change', toggleCashFields);
 
     // ==================== Proses dan Batal ====================
-    $(document).ready(function () {
-        $('.btn-process').click(function () {
-            const metodePembayaran = $('#paymentMethod').val();
-            const grandTotal = parseInt($('#grandTotal').val()) || 0;
-            const cash = parseInt($('#cash').val()) || 0;
-        
-            if (metodePembayaran === 'cash') {
-                if (!cash || cash < grandTotal) {
-                    alert('Uang tunai tidak cukup untuk membayar total belanja!');
-                    return;
-                }
-            }
-        
-            const pembayaranModal = new bootstrap.Modal(document.getElementById('menungguPembayaranModal'));
-            pembayaranModal.show();
-        });
-        
-        function getCartItems() {
-            const items = [];
-            const note = $('#note').val(); // Menangkap nilai note
-        
-            $('#salesTable tr').each(function () {
-                const kodeBarang = $(this).find('td:eq(1)').text();
-                const namaBarang = $(this).find('td:eq(2)').text();
-                const hargaBarang = parseInt($(this).find('td:eq(3)').text());
-                const jumlah = parseInt($(this).find('td:eq(4)').text());
-                const subtotal = parseInt($(this).find('td:eq(5)').text());
-        
-                // Ambil id_barang dari data barang yang sesuai
-                const idBarang = $(this).data('id');
-        
-                if (idBarang && jumlah > 0) {
-                    items.push({
-                        id_barang: idBarang,
-                        kode_barang: kodeBarang,        // Menambahkan kode barang
-                        nama_barang: namaBarang,        // Menambahkan nama barang
-                        harga_barang: hargaBarang,      // Menambahkan harga barang
-                        jumlah: jumlah,
-                        subtotal: subtotal,
-                        note: note                      // Menambahkan note ke setiap item
-                    });
-                }
-            });
-        
-            return items;
-        }
-        
-        
-        $('.btn-selesai-pembayaran').click(function () {
-            const items = getCartItems();
-            const metodePembayaran = $('#paymentMethod').val();
-            const totalHarga = parseInt($('#grandTotal').val()) || 0;
-            const note = $('#note').val(); // Ambil nilai note
-        
-            if (items.length === 0) {
-                alert('Keranjang kosong!');
+    $('.btn-process').click(function () {
+        const metodePembayaran = $('#paymentMethod').val();
+        const grandTotal = parseInt($('#grandTotal').val()) || 0;
+        const cash = parseInt($('#cash').val()) || 0;
+    
+        if (metodePembayaran === 'cash') {
+            if (!cash || cash < grandTotal) {
+                alert('Uang tunai tidak cukup untuk membayar total belanja!');
                 return;
             }
-        
-            $.ajax({
-                url: '/transaksi/store',
-                type: 'POST',
-                data: {
-                    _token: $('meta[name="csrf-token"]').attr('content'),
-                    metode_pembayaran: metodePembayaran,
-                    total_harga: totalHarga,
-                    items: items,
-                    note: note // Kirim note ke server
-                },
-                success: function (response) {
-                    // Tampilkan alert sukses, lalu setelah user tekan OK, tutup modal
-                    alert(response.message || 'Transaksi berhasil disimpan.');
-        
-                    // Tutup modal setelah alert ditutup
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('menungguPembayaranModal'));
-                    modal.hide();
-        
-                    // Reset form
-                    $('#salesTable').empty();
-                    $('#cash').val(0);
-                    $('#change').val(0);
-                    $('#subTotal').val(0);
-                    $('#grandTotal').val(0);
-                    $('.total-display').text("0");
-                    $('#note').val(''); // Reset note
-                },
-        
-                error: function (xhr) {
-                    console.log('Full error response:', xhr);
-                    alert(xhr.responseJSON?.message || 'Gagal menyimpan transaksi.');
-                }
-            });
-        });
+        }
+    
+        const pembayaranModal = new bootstrap.Modal(document.getElementById('menungguPembayaranModal'));
+        pembayaranModal.show();
     });
     
+    function getCartItems() {
+        const items = [];
+        const note = $('#note').val(); // Menangkap nilai note
     
-    $('.btn-cancel').click(function () {
-        if (confirm('Yakin ingin membatalkan transaksi?')) {
-            $('#salesTable').empty();
-            $('#cash').val(0);
-            calculateTotals();
+        $('#salesTable tr').each(function () {
+            const kodeBarang = $(this).find('td:eq(1)').text();
+            const namaBarang = $(this).find('td:eq(2)').text();
+            const hargaBarang = parseInt($(this).find('td:eq(3)').text());
+            const jumlah = parseInt($(this).find('td:eq(4)').text());
+            const subtotal = parseInt($(this).find('td:eq(5)').text());
+    
+            // Ambil id_barang dari data barang yang sesuai
+            const idBarang = $(this).data('id');
+    
+            if (idBarang && jumlah > 0) {
+                items.push({
+                    id_barang: idBarang,
+                    kode_barang: kodeBarang,        // Menambahkan kode barang
+                    nama_barang: namaBarang,        // Menambahkan nama barang
+                    harga_barang: hargaBarang,      // Menambahkan harga barang
+                    jumlah: jumlah,
+                    subtotal: subtotal,
+                    note: note                      // Menambahkan note ke setiap item
+                });
+            }
+        });
+    
+        return items;
+    }
+    
+    $('.btn-selesai-pembayaran').click(function () {
+        const items = getCartItems();
+        const metodePembayaran = $('#paymentMethod').val();
+        const totalHarga = parseInt($('#grandTotal').val()) || 0;
+        const note = $('#note').val(); // Ambil nilai note
+    
+        if (items.length === 0) {
+            alert('Keranjang kosong!');
+            return;
+        }
+    
+        $.ajax({
+            url: '/transaksi/store',
+            type: 'POST',
+            data: {
+                _token: $('meta[name="csrf-token"]').attr('content'),
+                metode_pembayaran: metodePembayaran,
+                total_harga: totalHarga,
+                items: items,
+                note: note // Kirim note ke server
+            },
+            success: function (response) {
+                // Tampilkan alert sukses, lalu setelah user tekan OK, tutup modal
+                alert(response.message || 'Transaksi berhasil disimpan.');
+    
+                // Tutup modal setelah alert ditutup
+                const modal = bootstrap.Modal.getInstance(document.getElementById('menungguPembayaranModal'));
+                modal.hide();
+    
+                // Reset semua menggunakan fungsi reset lengkap
+                resetAllTransaction();
+            },
+    
+            error: function (xhr) {
+                console.log('Full error response:', xhr);
+                alert(xhr.responseJSON?.message || 'Gagal menyimpan transaksi.');
+            }
+        });
+    });
+
+    // ==================== Tombol Cancel - Reset Semua ====================
+    $(document).on('click', '.btn-cancel', function () {
+        if (confirm('Yakin ingin membatalkan transaksi? Semua data akan dihapus.')) {
+            resetAllTransaction();
+            
+            // Tampilkan pesan konfirmasi
+            alert('Transaksi telah dibatalkan dan semua data direset.');
         }
     });
 
