@@ -6,6 +6,11 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use GuzzleHttp\Client;
 use App\Models\Barang;
+use App\Models\Prediksi;
+use App\Models\DetailPrediksi;
+use App\Models\DataPrediksi;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class SalesForecastController extends Controller
 {
@@ -49,6 +54,11 @@ class SalesForecastController extends Controller
             $stockInfo = $this->calculateStockDepletion($request->item_name, $data['predictions']);
             $data['stock_info'] = $stockInfo;
             
+            // Simpan data prediksi ke database
+            DB::transaction(function () use ($request, $data, $stockInfo) {
+                $this->saveSinglePrediction($request, $data, $stockInfo);
+            });
+            
             return response()->json($data);
 
         } catch (\Exception $e) {
@@ -81,12 +91,85 @@ class SalesForecastController extends Controller
                 $itemData['stock_info'] = $stockInfo;
             }
             
+            // Simpan data prediksi ke database
+            DB::transaction(function () use ($request, $data) {
+                $this->saveAllPredictions($request, $data);
+            });
+            
             return response()->json($data);
 
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Prediction service unavailable: ' . $e->getMessage()
             ], 500);
+        }
+    }
+
+    /**
+     * Simpan prediksi single item ke database
+     */
+    private function saveSinglePrediction($request, $data, $stockInfo)
+    {
+        // Buat record prediksi utama
+        $prediksi = Prediksi::create([
+            'tanggal' => Carbon::now()->toDateString(),
+            'jumlah_item' => 1,
+            'jumlah_hari' => $request->days_ahead ?? 7
+        ]);
+
+        // Buat detail prediksi
+        $detailPrediksi = DetailPrediksi::create([
+            'id_prediksi' => $prediksi->id_prediksi,
+            'nama_item' => $request->item_name,
+            'stok_tersisa' => $stockInfo['current_stock'],
+            'sisa_hari' => $stockInfo['days_until_depletion'],
+            'tanggal_habis' => $stockInfo['depletion_date'] ? Carbon::parse($stockInfo['depletion_date'])->toDateString() : null
+        ]);
+
+        // Simpan data prediksi harian
+        foreach ($data['predictions'] as $prediction) {
+            DataPrediksi::create([
+                'id_detail_prediksi' => $detailPrediksi->id_detail_prediksi,
+                'id_prediksi' => $prediksi->id_prediksi,
+                'tanggal' => Carbon::parse($prediction['date'])->toDateString(),
+                'jumlah_prediksi' => max(0, round($prediction['predicted_quantity'], 2))
+            ]);
+        }
+    }
+
+    /**
+     * Simpan prediksi semua item ke database
+     */
+    private function saveAllPredictions($request, $data)
+    {
+        // Buat record prediksi utama
+        $prediksi = Prediksi::create([
+            'tanggal' => Carbon::now()->toDateString(),
+            'jumlah_item' => count($data),
+            'jumlah_hari' => $request->days_ahead ?? 7
+        ]);
+
+        // Loop untuk setiap item
+        foreach ($data as $itemName => $itemData) {
+            // Buat detail prediksi untuk setiap item
+            $detailPrediksi = DetailPrediksi::create([
+                'id_prediksi' => $prediksi->id_prediksi,
+                'nama_item' => $itemName,
+                'stok_tersisa' => $itemData['stock_info']['current_stock'],
+                'sisa_hari' => $itemData['stock_info']['days_until_depletion'],
+                'tanggal_habis' => $itemData['stock_info']['depletion_date'] ? 
+                    Carbon::parse($itemData['stock_info']['depletion_date'])->toDateString() : null
+            ]);
+
+            // Simpan data prediksi harian untuk setiap item
+            foreach ($itemData['predictions'] as $prediction) {
+                DataPrediksi::create([
+                    'id_detail_prediksi' => $detailPrediksi->id_detail_prediksi,
+                    'id_prediksi' => $prediksi->id_prediksi,
+                    'tanggal' => Carbon::parse($prediction['date'])->toDateString(),
+                    'jumlah_prediksi' => max(0, round($prediction['predicted_quantity'], 2))
+                ]);
+            }
         }
     }
     
@@ -193,5 +276,34 @@ class SalesForecastController extends Controller
         } else {
             return "✅ Stok akan habis dalam $daysUntilDepletion hari ($depletionDate)";
         }
+    }
+
+    /**
+     * Get historical predictions - method tambahan untuk melihat riwayat prediksi
+     */
+    public function getHistoricalPredictions(Request $request)
+    {
+        $prediksi = Prediksi::with(['detailPrediksi.dataPrediksi'])
+            ->orderBy('tanggal', 'desc')
+            ->take(10)
+            ->get();
+            
+        return response()->json($prediksi);
+    }
+
+    /**
+     * Get prediction by ID - method tambahan untuk melihat detail prediksi
+     */
+    public function getPredictionById($id)
+    {
+        $prediksi = Prediksi::with(['detailPrediksi.dataPrediksi'])
+            ->where('id_prediksi', $id)
+            ->first();
+            
+        if (!$prediksi) {
+            return response()->json(['error' => 'Prediction not found'], 404);
+        }
+        
+        return response()->json($prediksi);
     }
 }

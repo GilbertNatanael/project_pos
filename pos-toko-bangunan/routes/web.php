@@ -59,5 +59,14 @@ Route::get('/pembelian/{id}/detail', [PembelianController::class, 'detail']);
 Route::get('/forecast', [SalesForecastController::class, 'index'])->name('forecast.index');
 Route::post('/api/forecast/single', [SalesForecastController::class, 'predictSingle']);
 Route::post('/api/forecast/all', [SalesForecastController::class, 'predictAll']);
+// Route tambahan untuk melihat riwayat prediksi
+Route::get('/api/forecast/history', [SalesForecastController::class, 'getHistoricalPredictions'])->name('forecast.history');
+Route::get('/api/forecast/{id}', [SalesForecastController::class, 'getPredictionById'])->name('forecast.detail');
+
 
 Route::get('/transaksi/detail/{id}', [TransaksiController::class, 'getDetail']);
+
+// Route untuk halaman utama forecast
+Route::get('/forecast', [SalesForecastController::class, 'index'])->name('forecast.index');
+
+
