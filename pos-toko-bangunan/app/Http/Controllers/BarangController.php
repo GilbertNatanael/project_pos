@@ -42,6 +42,7 @@ class BarangController extends Controller
             'nama_barang' => 'required|string|max:255',
             'harga_barang' => 'required|numeric',
             'jumlah_barang' => 'required|numeric|min:0',
+            'satuan_barang' => 'nullable|string|max:50',
         ]);
 
         $barang = new Barang();
@@ -49,6 +50,7 @@ class BarangController extends Controller
         $barang->nama_barang = $request->nama_barang;
         $barang->harga_barang = $request->harga_barang;
         $barang->jumlah_barang = $request->jumlah_barang;
+        $barang->satuan_barang = $request->satuan_barang;
         $barang->save();
 
         $this->logHistory($barang->id_barang, 'tambah');
@@ -63,6 +65,7 @@ class BarangController extends Controller
             'nama_barang' => 'required|string|max:255',
             'harga_barang' => 'required|numeric',
             'jumlah_barang' => 'required|numeric|min:0',
+            'satuan_barang' => 'nullable|string|max:50',
         ]);
 
         $barang = Barang::find($id);
@@ -75,6 +78,7 @@ class BarangController extends Controller
         $barang->nama_barang = $request->nama_barang;
         $barang->harga_barang = $request->harga_barang;
         $barang->jumlah_barang = $request->jumlah_barang;
+        $barang->satuan_barang = $request->satuan_barang;
         $barang->save();
 
         $this->logHistory($barang->id_barang, 'update');
@@ -97,22 +101,22 @@ class BarangController extends Controller
     }
 
     // ✅ Method bantu untuk mencatat history
-private function logHistory($id_barang, $aksi)
-{
-    $id_karyawan = session('id_karyawan');
+    private function logHistory($id_barang, $aksi)
+    {
+        $id_karyawan = session('id_karyawan');
 
-    if (!$id_karyawan) return; // Jangan log jika tidak login
+        if (!$id_karyawan) return; // Jangan log jika tidak login
 
-    History::create([
-        'id_barang' => $id_barang,
-        'id_karyawan' => $id_karyawan,
-        'aksi' => $aksi
-    ]);
-}
-public function tambahPembelian()
-{
-    $barang = Barang::orderBy('nama_barang')->get();
-    return view('pembelian.tambah', compact('barang'));
-}
+        History::create([
+            'id_barang' => $id_barang,
+            'id_karyawan' => $id_karyawan,
+            'aksi' => $aksi
+        ]);
+    }
 
+    public function tambahPembelian()
+    {
+        $barang = Barang::orderBy('nama_barang')->get();
+        return view('pembelian.tambah', compact('barang'));
+    }
 }

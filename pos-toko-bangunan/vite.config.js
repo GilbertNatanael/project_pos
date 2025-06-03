@@ -30,7 +30,11 @@ export default defineConfig({
                 'resources/js/tambah_pembelian.js',
                 'resources/css/tambah_pembelian.css',
                 'resources/js/laporan.js',
-                'resources/css/laporan.css'
+                'resources/css/laporan.css',
+                'resources/js/cek_prediksi.js',
+                'resources/css/cek_prediksi.css',
+                'resources/js/detail_prediksi.js',
+                'resources/css/detail_prediksi.css'
             ],
             refresh: true,
         }),

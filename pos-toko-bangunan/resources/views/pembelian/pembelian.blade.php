@@ -64,6 +64,7 @@
                         <tr>
                             <th>Barang</th>
                             <th>Jumlah</th>
+                            <th>Satuan</th>
                             <th>Subtotal</th>
                         </tr>
                     </thead>

@@ -31,7 +31,7 @@
                     </div>
                     <div class="card-body">
                         <div class="row">
-                            <div class="col-md-4">
+                            <div class="col-md-3">
                                 <label for="item-select" class="form-label">Select Item:</label>
                                 <select id="item-select" class="form-select">
                                     @foreach($items as $item)
@@ -40,10 +40,14 @@
                                 </select>
                             </div>
                             <div class="col-md-3">
-                                <label for="days-input" class="form-label">Days Ahead:</label>
-                                <input type="number" id="days-input" class="form-control" value="7" min="1" max="365">
+                                <label for="date-from" class="form-label">From Date:</label>
+                                <input type="date" id="date-from" class="form-control" value="{{ date('Y-m-d', strtotime('+1 day')) }}">
                             </div>
-                            <div class="col-md-5 d-flex align-items-end">
+                            <div class="col-md-3">
+                                <label for="date-to" class="form-label">To Date:</label>
+                                <input type="date" id="date-to" class="form-control" value="{{ date('Y-m-d', strtotime('+7 days')) }}">
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end">
                                 <button onclick="predictSingle()" class="btn btn-primary me-2">
                                     🔍 Predict Single Item
                                 </button>

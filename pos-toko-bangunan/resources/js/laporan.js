@@ -30,58 +30,61 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     // Modal detail transaksi
-    document.querySelectorAll(".btn-detail").forEach((button) => {
-        button.addEventListener("click", function (e) {
-            e.preventDefault();
-            const id = this.dataset.id;
+    // Modal detail transaksi - Updated untuk menampilkan satuan
+document.querySelectorAll(".btn-detail").forEach((button) => {
+    button.addEventListener("click", function (e) {
+        e.preventDefault();
+        const id = this.dataset.id;
 
-            fetch(`/transaksi/detail/${id}`)
-                .then((res) => res.json())
-                .then((data) => {
-                    const detailBody = document.getElementById("detail-body");
-                    let html = `
-                        <p><strong>ID Transaksi:</strong> ${data.id_transaksi}</p>
-                        <p><strong>Tanggal:</strong> ${new Date(data.tanggal_waktu).toLocaleString()}</p>
-                        <p><strong>Metode Pembayaran:</strong> ${data.metode_pembayaran}</p>
-                        <p><strong>Total:</strong> Rp${parseInt(data.total_harga).toLocaleString("id-ID")}</p>
-                        <p><strong>Catatan:</strong> ${data.note ? data.note : '-'}</p>
-                        <hr>
-                        <h4>Barang:</h4>
-                        <table class="table-detail">
-                            <thead>
-                                <tr>
-                                    <th>Nama Barang</th>
-                                    <th>Jumlah</th>
-                                    <th>Subtotal</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                    `;
-
-                    data.detail_transaksi.forEach((item) => {
-                        html += `
+        fetch(`/transaksi/detail/${id}`)
+            .then((res) => res.json())
+            .then((data) => {
+                const detailBody = document.getElementById("detail-body");
+                let html = `
+                    <p><strong>ID Transaksi:</strong> ${data.id_transaksi}</p>
+                    <p><strong>Tanggal:</strong> ${new Date(data.tanggal_waktu).toLocaleString()}</p>
+                    <p><strong>Metode Pembayaran:</strong> ${data.metode_pembayaran}</p>
+                    <p><strong>Total:</strong> Rp${parseInt(data.total_harga).toLocaleString("id-ID")}</p>
+                    <p><strong>Catatan:</strong> ${data.note ? data.note : '-'}</p>
+                    <hr>
+                    <h4>Barang:</h4>
+                    <table class="table-detail">
+                        <thead>
                             <tr>
-                                <td>${item.barang?.nama_barang ?? '-'}</td>
-                                <td>${item.jumlah}</td>
-                                <td>Rp${parseInt(item.subtotal).toLocaleString("id-ID")}</td>
+                                <th>Nama Barang</th>
+                                <th>Jumlah</th>
+                                <th>Satuan</th>
+                                <th>Subtotal</th>
                             </tr>
-                        `;
-                    });
+                        </thead>
+                        <tbody>
+                `;
 
-                    html += `</tbody></table>`;
-                    detailBody.innerHTML = html;
-
-                    // Tampilkan modal
-                    const modal = document.getElementById("modal-detail");
-                    modal.style.display = "flex";
-                    document.body.style.overflow = "hidden";
-                })
-                .catch((err) => {
-                    alert("Gagal mengambil detail transaksi");
-                    console.error(err);
+                data.detail_transaksi.forEach((item) => {
+                    html += `
+                        <tr>
+                            <td>${item.barang?.nama_barang ?? '-'}</td>
+                            <td>${item.jumlah}</td>
+                            <td>${item.barang?.satuan_barang ?? '-'}</td>
+                            <td>Rp${parseInt(item.subtotal).toLocaleString("id-ID")}</td>
+                        </tr>
+                    `;
                 });
-        });
+
+                html += `</tbody></table>`;
+                detailBody.innerHTML = html;
+
+                // Tampilkan modal
+                const modal = document.getElementById("modal-detail");
+                modal.style.display = "flex";
+                document.body.style.overflow = "hidden";
+            })
+            .catch((err) => {
+                alert("Gagal mengambil detail transaksi");
+                console.error(err);
+            });
     });
+});
 
     // Validasi tanggal
     const startDateInput = document.getElementById('start-date');

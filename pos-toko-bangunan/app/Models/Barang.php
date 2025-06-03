@@ -14,6 +14,7 @@ class Barang extends Model
         'nama_barang',
         'harga_barang',
         'jumlah_barang',
+        'satuan_barang',
     ];
 
     public $timestamps = true; // default-nya true, bisa dihilangkan kalau pakai timestamps

@@ -24,6 +24,10 @@
                                 <label for="date">Date</label>
                                 <input type="date" class="form-control" id="date" name="date" value="{{ date('Y-m-d') }}">
 
+                                <label for="time" class="mt-3">Time (Opsional)</label>
+                                <input type="time" class="form-control" id="time" name="time" placeholder="Kosongkan untuk waktu saat ini">
+                                <small class="text-muted">Biarkan kosong untuk menggunakan waktu saat transaksi dilakukan</small>
+
                                 <label for="kasir" class="mt-3">Kasir</label>
                                 <input type="text" class="form-control" id="kasir" name="kasir" value="{{ Session::get('username') }}" readonly>
                             </div>
@@ -33,7 +37,7 @@
                                     <option value="cash">Cash</option>
                                     <option value="card">Card</option>
                                     <option value="transfer">Transfer</option>
-                                    <option value="transfer">QRIS</option>
+                                    <option value="qris">QRIS</option>
                                 </select>
                             </div>
                         </div>
@@ -52,6 +56,7 @@
                                     <th>Kode</th>
                                     <th>Nama Barang</th>
                                     <th>Harga</th>
+                                    <th>Satuan</th>
                                     <th>Pcs</th>
                                     <th>Total</th>
                                     <th>Actions</th>
@@ -128,6 +133,7 @@
                                 <th>Kode</th>
                                 <th>Nama Barang</th>
                                 <th>Harga</th>
+                                <th>Satuan</th>
                                 <th>Stok</th>
                                 <th>Qty</th>
                                 <th>Aksi</th>
@@ -135,10 +141,15 @@
                         </thead>
                         <tbody id="tabelBarang">
                             @foreach($barang as $item)
-                            <tr data-id="{{ $item->id_barang }}" data-nama="{{ $item->nama_barang }}" data-harga="{{ $item->harga_barang }}" data-stok="{{ $item->jumlah_barang }}">
+                            <tr data-id="{{ $item->id_barang }}" 
+                                data-nama="{{ $item->nama_barang }}" 
+                                data-harga="{{ $item->harga_barang }}" 
+                                data-satuan="{{ $item->satuan_barang ?? 'pcs' }}"
+                                data-stok="{{ $item->jumlah_barang }}">
                                 <td>{{ $item->kode_barang }}</td>
                                 <td>{{ $item->nama_barang }}</td>
                                 <td>{{ number_format($item->harga_barang) }}</td>
+                                <td>{{ $item->satuan_barang ?? 'pcs' }}</td>
                                 <td>{{ $item->jumlah_barang }}</td>
                                 <td class="text-center">
                                     <button class="btn-decrease px-2 py-1 bg-light border">-</button>

@@ -35,20 +35,40 @@ class SalesForecastController extends Controller
     {
         $request->validate([
             'item_name' => 'required|string',
-            'days_ahead' => 'integer|min:1|max:365'
+            'date_from' => 'required|date|after_or_equal:today',
+            'date_to' => 'required|date|after:date_from'
         ]);
 
+        // Validasi periode yang overlapping
+        $overlapCheck = $this->checkPeriodOverlap($request->item_name, $request->date_from, $request->date_to);
+        if ($overlapCheck['has_overlap']) {
+            return response()->json([
+                'error' => 'Periode prediksi bertabrakan dengan prediksi sebelumnya',
+                'details' => $overlapCheck['details']
+            ], 422);
+        }
+
         try {
+            $dateFrom = Carbon::parse($request->date_from);
+            $dateTo = Carbon::parse($request->date_to);
+            $daysAhead = $dateFrom->diffInDays($dateTo) + 1;
+
             $client = new Client();
             $response = $client->post($this->flaskApiUrl . '/predict', [
                 'json' => [
                     'item_name' => $request->item_name,
-                    'days_ahead' => $request->days_ahead ?? 7
+                    'date_from' => $request->date_from,
+                    'date_to' => $request->date_to,
+                    'days_ahead' => $daysAhead
                 ],
                 'timeout' => 30
             ]);
 
             $data = json_decode($response->getBody(), true);
+            
+            // Tambahkan informasi periode
+            $data['date_from'] = $request->date_from;
+            $data['date_to'] = $request->date_to;
             
             // Tambahkan perhitungan kapan barang habis
             $stockInfo = $this->calculateStockDepletion($request->item_name, $data['predictions']);
@@ -71,22 +91,56 @@ class SalesForecastController extends Controller
     public function predictAll(Request $request): JsonResponse
     {
         $request->validate([
-            'days_ahead' => 'integer|min:1|max:365'
+            'date_from' => 'required|date|after_or_equal:today',
+            'date_to' => 'required|date|after:date_from'
         ]);
 
+        // Validasi periode yang overlapping untuk semua item
+        $overlapResults = [];
+        foreach ($this->items as $item) {
+            $overlapCheck = $this->checkPeriodOverlap($item, $request->date_from, $request->date_to);
+            if ($overlapCheck['has_overlap']) {
+                $overlapResults[] = [
+                    'item' => $item,
+                    'details' => $overlapCheck['details']
+                ];
+            }
+        }
+
+        if (!empty($overlapResults)) {
+            return response()->json([
+                'error' => 'Beberapa item memiliki periode prediksi yang bertabrakan',
+                'overlapping_items' => $overlapResults
+            ], 422);
+        }
+
         try {
+            $dateFrom = Carbon::parse($request->date_from);
+            $dateTo = Carbon::parse($request->date_to);
+            $daysAhead = $dateFrom->diffInDays($dateTo) + 1;
+
             $client = new Client();
             $response = $client->post($this->flaskApiUrl . '/predict/all', [
                 'json' => [
-                    'days_ahead' => $request->days_ahead ?? 7
+                    'date_from' => $request->date_from,
+                    'date_to' => $request->date_to,
+                    'days_ahead' => $daysAhead
                 ],
                 'timeout' => 60
             ]);
 
             $data = json_decode($response->getBody(), true);
             
+            // Tambahkan informasi periode untuk semua items
+            $data['period'] = [
+                'date_from' => $request->date_from,
+                'date_to' => $request->date_to
+            ];
+            
             // Tambahkan perhitungan untuk semua items
             foreach ($data as $itemName => &$itemData) {
+                if ($itemName === 'period') continue;
+                
                 $stockInfo = $this->calculateStockDepletion($itemName, $itemData['predictions']);
                 $itemData['stock_info'] = $stockInfo;
             }
@@ -106,6 +160,79 @@ class SalesForecastController extends Controller
     }
 
     /**
+     * Cek apakah periode prediksi bertabrakan dengan prediksi sebelumnya
+     */
+    private function checkPeriodOverlap($itemName, $dateFrom, $dateTo)
+    {
+        $existingPredictions = DB::table('prediksi as p')
+            ->join('detail_prediksi as dp', 'p.id_prediksi', '=', 'dp.id_prediksi')
+            ->where('dp.nama_item', $itemName)
+            ->where(function ($query) use ($dateFrom, $dateTo) {
+                // Cek apakah ada overlap periode
+                $query->where(function ($q) use ($dateFrom, $dateTo) {
+                    // Case 1: New period starts within existing period
+                    $q->where('p.tanggal_dari', '<=', $dateFrom)
+                      ->where('p.tanggal_sampai', '>=', $dateFrom);
+                })->orWhere(function ($q) use ($dateFrom, $dateTo) {
+                    // Case 2: New period ends within existing period
+                    $q->where('p.tanggal_dari', '<=', $dateTo)
+                      ->where('p.tanggal_sampai', '>=', $dateTo);
+                })->orWhere(function ($q) use ($dateFrom, $dateTo) {
+                    // Case 3: New period encompasses existing period
+                    $q->where('p.tanggal_dari', '>=', $dateFrom)
+                      ->where('p.tanggal_sampai', '<=', $dateTo);
+                })->orWhere(function ($q) use ($dateFrom, $dateTo) {
+                    // Case 4: Existing period encompasses new period
+                    $q->where('p.tanggal_dari', '<=', $dateFrom)
+                      ->where('p.tanggal_sampai', '>=', $dateTo);
+                });
+            })
+            ->select('p.tanggal_dari', 'p.tanggal_sampai', 'p.tanggal', 'dp.nama_item')
+            ->get();
+
+        if ($existingPredictions->count() > 0) {
+            $details = $existingPredictions->map(function ($prediction) {
+                return [
+                    'item' => $prediction->nama_item,
+                    'existing_period' => [
+                        'from' => $prediction->tanggal_dari,
+                        'to' => $prediction->tanggal_sampai
+                    ],
+                    'prediction_date' => $prediction->tanggal
+                ];
+            })->toArray();
+
+            return [
+                'has_overlap' => true,
+                'details' => $details
+            ];
+        }
+
+        return [
+            'has_overlap' => false,
+            'details' => []
+        ];
+    }
+
+    /**
+     * Get available dates for a specific item (untuk frontend)
+     */
+    public function getAvailableDates($itemName)
+    {
+        $usedPeriods = DB::table('prediksi as p')
+            ->join('detail_prediksi as dp', 'p.id_prediksi', '=', 'dp.id_prediksi')
+            ->where('dp.nama_item', $itemName)
+            ->select('p.tanggal_dari', 'p.tanggal_sampai')
+            ->orderBy('p.tanggal_dari')
+            ->get();
+
+        return response()->json([
+            'item_name' => $itemName,
+            'used_periods' => $usedPeriods
+        ]);
+    }
+
+    /**
      * Simpan prediksi single item ke database
      */
     private function saveSinglePrediction($request, $data, $stockInfo)
@@ -114,7 +241,8 @@ class SalesForecastController extends Controller
         $prediksi = Prediksi::create([
             'tanggal' => Carbon::now()->toDateString(),
             'jumlah_item' => 1,
-            'jumlah_hari' => $request->days_ahead ?? 7
+            'tanggal_dari' => $request->date_from,
+            'tanggal_sampai' => $request->date_to
         ]);
 
         // Buat detail prediksi
@@ -145,12 +273,15 @@ class SalesForecastController extends Controller
         // Buat record prediksi utama
         $prediksi = Prediksi::create([
             'tanggal' => Carbon::now()->toDateString(),
-            'jumlah_item' => count($data),
-            'jumlah_hari' => $request->days_ahead ?? 7
+            'jumlah_item' => count($data) - 1, // -1 karena ada key 'period'
+            'tanggal_dari' => $request->date_from,
+            'tanggal_sampai' => $request->date_to
         ]);
 
         // Loop untuk setiap item
         foreach ($data as $itemName => $itemData) {
+            if ($itemName === 'period') continue; // Skip period info
+            
             // Buat detail prediksi untuk setiap item
             $detailPrediksi = DetailPrediksi::create([
                 'id_prediksi' => $prediksi->id_prediksi,
@@ -172,7 +303,6 @@ class SalesForecastController extends Controller
             }
         }
     }
-    
     /**
      * Hitung kapan barang akan habis berdasarkan stok dan prediksi penjualan
      */
@@ -306,4 +436,44 @@ class SalesForecastController extends Controller
         
         return response()->json($prediksi);
     }
+
+
+public function cekPrediksi(Request $request)
+{
+    $query = Prediksi::query();
+
+    // Filter berdasarkan tanggal prediksi dibuat
+    if ($request->filled('tanggal_start')) {
+        $query->whereDate('tanggal', '>=', $request->tanggal_start);
+    }
+
+    if ($request->filled('tanggal_end')) {
+        $query->whereDate('tanggal', '<=', $request->tanggal_end);
+    }
+
+    // Filter berdasarkan periode prediksi
+    if ($request->filled('periode_start')) {
+        $query->whereDate('tanggal_dari', '>=', $request->periode_start);
+    }
+
+    if ($request->filled('periode_end')) {
+        $query->whereDate('tanggal_sampai', '<=', $request->periode_end);
+    }
+
+    // Pencarian berdasarkan id_prediksi
+    if ($request->filled('search')) {
+        $search = str_replace('PRD-', '', strtoupper($request->search));
+        if (is_numeric($search)) {
+            $query->where('id_prediksi', intval($search));
+        }
+    }
+
+    $dataPrediksi = $query->orderByDesc('tanggal')->get();
+
+    return response()->json($dataPrediksi);
+}
+
+
+
+
 }

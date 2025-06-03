@@ -2,9 +2,105 @@ import Chart from 'chart.js/auto';
 
 let currentChart = null;
 
+// Store used periods for validation
+let usedPeriods = {};
+
+// Load used periods when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadUsedPeriods();
+});
+
+// Load used periods for all items
+async function loadUsedPeriods() {
+    try {
+        const items = Array.from(document.getElementById('item-select').options).map(opt => opt.value);
+        
+        for (const item of items) {
+            const response = await fetch(`/api/forecast/available-dates/${encodeURIComponent(item)}`);
+            if (response.ok) {
+                const data = await response.json();
+                usedPeriods[item] = data.used_periods || [];
+            }
+        }
+    } catch (error) {
+        console.error('Error loading used periods:', error);
+    }
+}
+
+// Check if date period overlaps with existing predictions
+function checkPeriodOverlap(itemName, dateFrom, dateTo) {
+    if (!usedPeriods[itemName]) return { hasOverlap: false, details: [] };
+    
+    const newStart = new Date(dateFrom);
+    const newEnd = new Date(dateTo);
+    
+    for (const period of usedPeriods[itemName]) {
+        const existingStart = new Date(period.tanggal_dari);
+        const existingEnd = new Date(period.tanggal_sampai);
+        
+        // Check for overlap
+        if ((newStart <= existingEnd && newEnd >= existingStart)) {
+            return {
+                hasOverlap: true,
+                details: [{
+                    existing_period: {
+                        from: period.tanggal_dari,
+                        to: period.tanggal_sampai
+                    }
+                }]
+            };
+        }
+    }
+    
+    return { hasOverlap: false, details: [] };
+}
+
+// Show overlap error message
+function showOverlapError(overlapData) {
+    let message = 'Periode prediksi bertabrakan dengan prediksi sebelumnya:\n\n';
+    
+    if (overlapData.overlapping_items) {
+        // Multiple items overlap
+        overlapData.overlapping_items.forEach(item => {
+            message += `Item: ${item.item}\n`;
+            item.details.forEach(detail => {
+                message += `- Periode yang sudah digunakan: ${detail.existing_period.from} sampai ${detail.existing_period.to}\n`;
+            });
+            message += '\n';
+        });
+    } else if (overlapData.details) {
+        // Single item overlap
+        overlapData.details.forEach(detail => {
+            message += `- Periode yang sudah digunakan: ${detail.existing_period.from} sampai ${detail.existing_period.to}\n`;
+        });
+    }
+    
+    message += '\nSilakan pilih periode yang berbeda.';
+    showError(message);
+}
+
 window.predictSingle = async function () {
     const item = document.getElementById('item-select').value;
-    const days = document.getElementById('days-input').value;
+    const dateFrom = document.getElementById('date-from').value;
+    const dateTo = document.getElementById('date-to').value;
+
+    // Validasi tanggal
+    if (!dateFrom || !dateTo) {
+        showError('Please select both from and to dates');
+        return;
+    }
+
+    if (new Date(dateFrom) >= new Date(dateTo)) {
+        showError('From date must be before to date');
+        return;
+    }
+
+    // Validasi periode overlap di frontend
+    const overlapCheck = checkPeriodOverlap(item, dateFrom, dateTo);
+    if (overlapCheck.hasOverlap) {
+        showOverlapError({ details: overlapCheck.details });
+        return;
+    }
 
     showLoading(true);
 
@@ -17,14 +113,26 @@ window.predictSingle = async function () {
             },
             body: JSON.stringify({
                 item_name: item,
-                days_ahead: parseInt(days)
+                date_from: dateFrom,
+                date_to: dateTo
             })
         });
 
         const data = await response.json();
 
-        if (data.error) throw new Error(data.error);
+        if (data.error) {
+            if (response.status === 422 && data.details) {
+                // Handle overlap error from backend
+                showOverlapError(data);
+            } else {
+                throw new Error(data.error);
+            }
+            return;
+        }
 
+        // Update used periods after successful prediction
+        await loadUsedPeriods();
+        
         displaySingleResult(data);
         createChart([data]);
 
@@ -37,7 +145,38 @@ window.predictSingle = async function () {
 };
 
 window.predictAll = async function () {
-    const days = document.getElementById('days-input').value;
+    const dateFrom = document.getElementById('date-from').value;
+    const dateTo = document.getElementById('date-to').value;
+
+    // Validasi tanggal
+    if (!dateFrom || !dateTo) {
+        showError('Please select both from and to dates');
+        return;
+    }
+
+    if (new Date(dateFrom) >= new Date(dateTo)) {
+        showError('From date must be before to date');
+        return;
+    }
+
+    // Validasi periode overlap untuk semua item di frontend
+    const items = Array.from(document.getElementById('item-select').options).map(opt => opt.value);
+    const overlappingItems = [];
+    
+    for (const item of items) {
+        const overlapCheck = checkPeriodOverlap(item, dateFrom, dateTo);
+        if (overlapCheck.hasOverlap) {
+            overlappingItems.push({
+                item: item,
+                details: overlapCheck.details
+            });
+        }
+    }
+    
+    if (overlappingItems.length > 0) {
+        showOverlapError({ overlapping_items: overlappingItems });
+        return;
+    }
 
     showLoading(true);
 
@@ -49,14 +188,26 @@ window.predictAll = async function () {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
             },
             body: JSON.stringify({
-                days_ahead: parseInt(days)
+                date_from: dateFrom,
+                date_to: dateTo
             })
         });
 
         const data = await response.json();
 
-        if (data.error) throw new Error(data.error);
+        if (data.error) {
+            if (response.status === 422 && data.overlapping_items) {
+                // Handle overlap error from backend
+                showOverlapError(data);
+            } else {
+                throw new Error(data.error);
+            }
+            return;
+        }
 
+        // Update used periods after successful prediction
+        await loadUsedPeriods();
+        
         displayAllResults(data);
         createChartAll(data);
 
@@ -68,6 +219,59 @@ window.predictAll = async function () {
     }
 };
 
+// Add visual indicators for unavailable dates
+function updateDateInputs() {
+    const item = document.getElementById('item-select').value;
+    const dateFromInput = document.getElementById('date-from');
+    const dateToInput = document.getElementById('date-to');
+    
+    // Clear previous warnings
+    removeWarnings();
+    
+    if (usedPeriods[item] && usedPeriods[item].length > 0) {
+        showUsedPeriodsInfo(item);
+    }
+}
+
+// Show information about used periods
+function showUsedPeriodsInfo(itemName) {
+    const existingInfo = document.getElementById('used-periods-info');
+    if (existingInfo) existingInfo.remove();
+    
+    if (!usedPeriods[itemName] || usedPeriods[itemName].length === 0) return;
+    
+    const infoDiv = document.createElement('div');
+    infoDiv.id = 'used-periods-info';
+    infoDiv.className = 'alert alert-info mt-2';
+    infoDiv.innerHTML = `
+        <strong>Periode yang sudah digunakan untuk ${itemName}:</strong>
+        <ul class="mb-0 mt-2">
+            ${usedPeriods[itemName].map(period => 
+                `<li>${period.tanggal_dari} sampai ${period.tanggal_sampai}</li>`
+            ).join('')}
+        </ul>
+    `;
+    
+    const controlPanel = document.querySelector('.card-body');
+    controlPanel.appendChild(infoDiv);
+}
+
+// Remove warning elements
+function removeWarnings() {
+    const warnings = document.querySelectorAll('#used-periods-info');
+    warnings.forEach(warning => warning.remove());
+}
+
+// Update info when item selection changes
+document.addEventListener('DOMContentLoaded', function() {
+    const itemSelect = document.getElementById('item-select');
+    if (itemSelect) {
+        itemSelect.addEventListener('change', updateDateInputs);
+        // Show initial info
+        updateDateInputs();
+    }
+});
+
 function displaySingleResult(data) {
     const resultsDiv = document.getElementById('results');
 
@@ -78,6 +282,7 @@ function displaySingleResult(data) {
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5>🎯 Forecast Results for: ${data.item_name}</h5>
+                <small class="text-muted">Period: ${data.date_from} to ${data.date_to}</small>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -122,9 +327,16 @@ function displaySingleResult(data) {
 
 function displayAllResults(data) {
     const resultsDiv = document.getElementById('results');
-    let html = '<div class="card"><div class="card-header"><h5>📈 Forecast for All Items</h5></div><div class="card-body">';
+    let html = `<div class="card">
+        <div class="card-header">
+            <h5>📈 Forecast for All Items</h5>
+            <small class="text-muted">Period: ${data.period?.date_from} to ${data.period?.date_to}</small>
+        </div>
+        <div class="card-body">`;
 
     Object.keys(data).forEach(item => {
+        if (item === 'period') return; // Skip period info
+
         const mape = data[item].mape;
         let performanceClass = 'success';
         if (mape > 20) performanceClass = 'danger';
@@ -262,18 +474,26 @@ function createChartAll(data) {
         currentChart.destroy();
     }
 
-    // Ambil tanggal dari item pertama
-    const firstItemKey = Object.keys(data)[0];
+    // Filter out non-item keys (like 'period')
+    const itemKeys = Object.keys(data).filter(key => key !== 'period' && data[key].predictions);
+
+    if (itemKeys.length === 0) {
+        console.error('No valid item data found');
+        return;
+    }
+
+    // Ambil tanggal dari item pertama yang valid
+    const firstItemKey = itemKeys[0];
     const labels = data[firstItemKey].predictions.map(p => p.date);
 
-    // Buat dataset per item
+    // Buat dataset per item (hanya untuk item yang valid)
     const colors = [
         'rgb(75, 192, 192)', 'rgb(255, 99, 132)', 'rgb(255, 206, 86)',
         'rgb(54, 162, 235)', 'rgb(153, 102, 255)', 'rgb(255, 159, 64)',
         'rgb(201, 203, 207)'
     ];
 
-    const datasets = Object.keys(data).map((item, index) => {
+    const datasets = itemKeys.map((item, index) => {
         const color = colors[index % colors.length];
         return {
             label: item,

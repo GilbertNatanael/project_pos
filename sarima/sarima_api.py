@@ -1,4 +1,3 @@
-
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import joblib
@@ -33,15 +32,33 @@ def load_model_for_prediction(item_name):
         print(f"Error loading model for {item_name}: {e}")
         return None
 
+def generate_date_range(date_from, date_to):
+    """Generate list of dates between date_from and date_to"""
+    start_date = datetime.strptime(date_from, '%Y-%m-%d').date()
+    end_date = datetime.strptime(date_to, '%Y-%m-%d').date()
+    
+    dates = []
+    current_date = start_date
+    while current_date <= end_date:
+        dates.append(current_date.strftime('%Y-%m-%d'))
+        current_date += timedelta(days=1)
+    
+    return dates
+
 @app.route('/predict', methods=['POST'])
 def predict_sales():
     try:
         data = request.get_json()
         item_name = data.get('item_name')
+        date_from = data.get('date_from')
+        date_to = data.get('date_to')
         days_ahead = data.get('days_ahead', 7)
         
         if item_name not in ITEMS:
             return jsonify({'error': 'Item not found'}), 400
+        
+        if not date_from or not date_to:
+            return jsonify({'error': 'date_from and date_to are required'}), 400
             
         # Load model
         model_data = load_model_for_prediction(item_name)
@@ -50,20 +67,28 @@ def predict_sales():
             
         # Make prediction
         fitted_model = model_data['fitted_model']
-        forecast_result = fitted_model.get_forecast(steps=days_ahead)
+        
+        # Calculate days between dates
+        start_date = datetime.strptime(date_from, '%Y-%m-%d').date()
+        end_date = datetime.strptime(date_to, '%Y-%m-%d').date()
+        days_diff = (end_date - start_date).days + 1
+        
+        # Generate predictions for the date range
+        forecast_result = fitted_model.get_forecast(steps=days_diff)
         predictions = forecast_result.predicted_mean
         confidence_intervals = forecast_result.conf_int()
         
         # Ensure non-negative predictions
         predictions = np.maximum(predictions, 0)
         
-        # Create date range for predictions
-        start_date = datetime.now().date()
-        dates = [(start_date + timedelta(days=i)).strftime('%Y-%m-%d') for i in range(days_ahead)]
+        # Generate exact date range
+        dates = generate_date_range(date_from, date_to)
         
         # Format response
         response = {
             'item_name': item_name,
+            'date_from': date_from,
+            'date_to': date_to,
             'predictions': [
                 {
                     'date': dates[i],
@@ -95,19 +120,29 @@ def predict_all_items():
     """Predict for all items at once"""
     try:
         data = request.get_json()
+        date_from = data.get('date_from')
+        date_to = data.get('date_to')
         days_ahead = data.get('days_ahead', 7)
+        
+        if not date_from or not date_to:
+            return jsonify({'error': 'date_from and date_to are required'}), 400
+        
+        # Calculate days between dates
+        start_date = datetime.strptime(date_from, '%Y-%m-%d').date()
+        end_date = datetime.strptime(date_to, '%Y-%m-%d').date()
+        days_diff = (end_date - start_date).days + 1
+        
+        # Generate exact date range
+        dates = generate_date_range(date_from, date_to)
         
         results = {}
         for item in ITEMS:
             model_data = load_model_for_prediction(item)
             if model_data is not None:
                 fitted_model = model_data['fitted_model']
-                forecast_result = fitted_model.get_forecast(steps=days_ahead)
+                forecast_result = fitted_model.get_forecast(steps=days_diff)
                 predictions = forecast_result.predicted_mean
                 predictions = np.maximum(predictions, 0)
-                
-                start_date = datetime.now().date()
-                dates = [(start_date + timedelta(days=i)).strftime('%Y-%m-%d') for i in range(days_ahead)]
                 
                 results[item] = {
                     'predictions': [

@@ -6,12 +6,13 @@ document.addEventListener('DOMContentLoaded', function () {
         const id = row.dataset.id;
         const nama = row.dataset.nama;
         const harga = parseInt(row.dataset.harga);
+        const satuan = row.dataset.satuan;
 
         let existing = keranjang.find(item => item.id === id);
         if (existing) {
             existing.qty += 1;
         } else {
-            keranjang.push({ id, nama, harga: 0, qty: 1 });
+            keranjang.push({ id, nama, harga: 0, satuan, qty: 1 });
         }
 
         renderKeranjang();
@@ -34,9 +35,9 @@ document.addEventListener('DOMContentLoaded', function () {
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${item.nama}</td>
-                <td><input type="number" class="form-control form-control-sm qty-input" data-index="${index}" value="${item.qty}" min="1"></td>
-                <td><input type="number" class="form-control form-control-sm harga-input" data-index="${index}" value="${item.harga}" min="0"></td>
-
+                <td><input type="number" class="form-control form-control-sm qty-input" data-index="${index}" value="${item.qty}" min="1" style="width: 70px;"></td>
+                <td>${item.satuan}</td>
+                <td><input type="number" class="form-control harga-input" data-index="${index}" value="${item.harga}" min="0" style="width: 120px;"></td>
                 <td>Rp ${subtotal.toLocaleString()}</td>
                 <td><button class="btn btn-sm btn-danger btn-hapus" data-index="${index}">&times;</button></td>
             `;
@@ -100,7 +101,8 @@ function attachEvents() {
             id: item.id,
             nama: item.nama,
             qty: item.qty,
-            harga: item.harga
+            harga: item.harga,
+            satuan: item.satuan
         })),
         total: keranjang.reduce((sum, item) => sum + (item.harga * item.qty), 0)
     };

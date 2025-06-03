@@ -1,23 +1,28 @@
 <?php
 
-// app/Models/Prediksi.php
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Prediksi extends Model
 {
+    use HasFactory;
+
     protected $table = 'prediksi';
     protected $primaryKey = 'id_prediksi';
     
     protected $fillable = [
         'tanggal',
-        'jumlah_item',
-        'jumlah_hari'
+        'jumlah_item', 
+        'tanggal_dari',
+        'tanggal_sampai'
     ];
 
     protected $casts = [
-        'tanggal' => 'date'
+        'tanggal' => 'date',
+        'tanggal_dari' => 'date', 
+        'tanggal_sampai' => 'date'
     ];
 
     public function detailPrediksi()
@@ -71,6 +76,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class DataPrediksi extends Model
 {
+    public $timestamps = false;
     protected $table = 'data_prediksi';
     protected $primaryKey = 'id_data_prediksi';
     

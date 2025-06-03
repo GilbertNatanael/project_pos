@@ -26,7 +26,8 @@
             <li><a href="{{ route('forecast.index') }}" class="{{ request()->is('forecast*') ? 'active' : '' }}">
                 <i>📈</i> Prediksi
             </a></li>
-            <li><a href="{{ route('laporan') }}" class="{{ request()->is('laporan*') ? 'active' : '' }}"><i>📋</i> Laporan</a></li>
+            <li><a href="{{ route('laporan') }}" class="{{ request()->is('laporan*') ? 'active' : '' }}"><i>📋</i> Laporan Transaksi</a></li>
+            <li><a href="{{ route('cek_prediksi') }}" class="{{ request()->is('cek_prediksi*') ? 'active' : '' }}"><i>📋</i> cek Prediksi</a></li>
             <li><a href="{{ route('history') }}" class="{{ request()->is('history*') ? 'active' : '' }}"><i>🕘</i> History Aksi</a></li>
             @endif
         </ul>

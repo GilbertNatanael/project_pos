@@ -10,26 +10,27 @@ use Carbon\Carbon;
 
 class PembelianController extends Controller
 {
-public function index(Request $request)
-{
-    if ($request->ajax()) {
-        $pembelian = Pembelian::with('detailPembelian')
-            ->orderByDesc('tanggal')
-            ->get()
-            ->map(function ($p) {
-                return [
-                    'id' => $p->id_pembelian,
-                    'tanggal' => date('Y-m-d', strtotime($p->tanggal)),
-                    'total_item' => $p->detailPembelian->sum('jumlah'),
-                    'total_harga' => number_format($p->total, 0, ',', '.'),
-                ];
-            });
+    public function index(Request $request)
+    {
+        if ($request->ajax()) {
+            $pembelian = Pembelian::with('detailPembelian')
+                ->orderByDesc('tanggal')
+                ->get()
+                ->map(function ($p) {
+                    return [
+                        'id' => $p->id_pembelian,
+                        'tanggal' => date('Y-m-d', strtotime($p->tanggal)),
+                        'total_item' => $p->detailPembelian->sum('jumlah'),
+                        'total_harga' => number_format($p->total, 0, ',', '.'),
+                    ];
+                });
 
-        return response()->json(['data' => $pembelian]);
+            return response()->json(['data' => $pembelian]);
+        }
+
+        return view('pembelian.pembelian');
     }
 
-    return view('pembelian.pembelian');
-}
     public function tambah()
     {
         $barang = DB::table('barang')->get();
@@ -44,6 +45,7 @@ public function index(Request $request)
             'items.*.nama' => 'required|string',
             'items.*.qty' => 'required|integer|min:1',
             'items.*.harga' => 'required|numeric|min:0',
+            'items.*.satuan' => 'required|string', // Tambahan validasi satuan
             'total' => 'required|numeric|min:0'
         ]);
 
@@ -61,6 +63,7 @@ public function index(Request $request)
                     'id_barang' => $item['id'],
                     'nama_barang' => $item['nama'],
                     'jumlah' => $item['qty'],
+                    'satuan' => $item['satuan'], // Tambahan field satuan
                     'subtotal' => $item['qty'] * $item['harga'],
                 ]);
 
@@ -74,11 +77,27 @@ public function index(Request $request)
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
     }
-public function detail($id)
-{
-    $details = DetailPembelian::where('id_pembelian', $id)->get();
-    return response()->json($details);
-}
 
-}
+    public function detail($id)
+    {
+        // Join dengan tabel barang untuk mendapatkan satuan
+        $details = DB::table('detail_pembelian')
+            ->leftJoin('barang', 'detail_pembelian.id_barang', '=', 'barang.id_barang')
+            ->select(
+                'detail_pembelian.*',
+                'barang.satuan_barang'
+            )
+            ->where('detail_pembelian.id_pembelian', $id)
+            ->get()
+            ->map(function ($detail) {
+                return [
+                    'nama_barang' => $detail->nama_barang,
+                    'jumlah' => $detail->jumlah,
+                    'satuan' => $detail->satuan ?? $detail->satuan_barang ?? 'pcs', // Prioritas: satuan dari detail_pembelian, lalu dari barang, default 'pcs'
+                    'subtotal' => $detail->subtotal
+                ];
+            });
 
+        return response()->json($details);
+    }
+}

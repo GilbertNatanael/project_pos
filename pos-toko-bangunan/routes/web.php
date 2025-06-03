@@ -10,6 +10,8 @@ use App\Http\Controllers\HistoryController;
 use App\Http\Controllers\PembelianController;
 use App\Http\Controllers\SalesForecastController;
 use App\Http\Controllers\LaporanController;
+use App\Http\Controllers\DetailPrediksiController;
+
 
 Route::get('/', fn () => redirect()->route('login'));
 
@@ -69,4 +71,10 @@ Route::get('/transaksi/detail/{id}', [TransaksiController::class, 'getDetail']);
 // Route untuk halaman utama forecast
 Route::get('/forecast', [SalesForecastController::class, 'index'])->name('forecast.index');
 
+// Route yang sudah ada (pastikan seperti ini)
+Route::get('/cek_prediksi', fn () => view('cek_prediksi'))->name('cek_prediksi');
+Route::get('/cek-prediksi/data', [SalesForecastController::class, 'cekPrediksi']);
 
+// Route baru untuk detail prediksi
+Route::get('/prediksi/{id_prediksi}', [DetailPrediksiController::class, 'show'])->name('detail-prediksi');
+Route::get('/prediksi/{id_prediksi}/data', [DetailPrediksiController::class, 'getData'])->name('detail-prediksi-data');

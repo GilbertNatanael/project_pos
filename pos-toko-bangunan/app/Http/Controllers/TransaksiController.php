@@ -11,6 +11,7 @@ use App\Models\Barang;
 use App\Exports\LaporanExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 
 class TransaksiController extends Controller
 {
@@ -30,16 +31,27 @@ class TransaksiController extends Controller
             'items.*.jumlah' => 'required|integer|min:1',
             'items.*.subtotal' => 'required|numeric',
             'metode_pembayaran' => 'required|string',
+            'tanggal_transaksi' => 'required|date',
+            'waktu_transaksi' => 'nullable|date_format:H:i', // Validasi format waktu (opsional)
             'note' => 'nullable|string',
         ]);
 
         try {
             DB::beginTransaction();
 
-            // Buat transaksi baru
+            // Tentukan waktu transaksi
+            if ($request->filled('waktu_transaksi')) {
+                // Jika waktu diisi secara manual, gunakan waktu tersebut
+                $tanggalWaktu = $request->tanggal_transaksi . ' ' . $request->waktu_transaksi . ':00';
+            } else {
+                // Jika waktu tidak diisi, gunakan waktu saat ini dengan tanggal yang dipilih
+                $tanggalWaktu = $request->tanggal_transaksi . ' ' . now()->format('H:i:s');
+            }
+            
+            // Buat transaksi baru dengan tanggal dan waktu yang tepat
             $transaksi = Transaksi::create([
                 'id_admin' => $adminId,
-                'tanggal_waktu' => now(),
+                'tanggal_waktu' => $tanggalWaktu,
                 'total_harga' => $request->total_harga,
                 'metode_pembayaran' => $request->metode_pembayaran,
                 'note' => $request->note,
@@ -70,7 +82,11 @@ class TransaksiController extends Controller
 
             DB::commit();
 
-            return response()->json(['success' => true, 'transaksi' => $transaksi], 201);
+            return response()->json([
+                'success' => true, 
+                'message' => 'Transaksi berhasil disimpan pada ' . Carbon::parse($tanggalWaktu)->format('d/m/Y H:i:s'),
+                'transaksi' => $transaksi
+            ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
@@ -127,63 +143,63 @@ class TransaksiController extends Controller
 
     // Method untuk export Excel dengan detail lengkap
     public function exportExcel(Request $request)
-{
-    $filters = $this->extractFilters($request);
-    
-    // Buat nama file dengan format sederhana
-    $filename = 'laporan_penjualan_' . now()->format('d-m-Y') . '.xlsx';
-    
-    return Excel::download(new LaporanExport($filters), $filename);
-}
-
-// Method untuk export PDF dengan detail lengkap
-public function exportPdf(Request $request)
-{
-    $filters = $this->extractFilters($request);
-
-    $query = Transaksi::with(['detailTransaksi.barang']);
-
-    // Apply filters
-    if (!empty($filters['start_date'])) {
-        $query->whereDate('tanggal_waktu', '>=', $filters['start_date']);
-    }
-    if (!empty($filters['end_date'])) {
-        $query->whereDate('tanggal_waktu', '<=', $filters['end_date']);
-    }
-    if (!empty($filters['keyword'])) {
-        $keyword = $filters['keyword'];
-        $query->where(function($q) use ($keyword) {
-            $q->where('id_transaksi', 'like', "%$keyword%")
-              ->orWhere('note', 'like', "%$keyword%");
-        });
-    }
-    if (!empty($filters['metode'])) {
-        $query->where('metode_pembayaran', $filters['metode']);
-    }
-    if (!empty($filters['harga_min'])) {
-        $query->where('total_harga', '>=', $filters['harga_min']);
-    }
-    if (!empty($filters['harga_max'])) {
-        $query->where('total_harga', '<=', $filters['harga_max']);
+    {
+        $filters = $this->extractFilters($request);
+        
+        // Buat nama file dengan format sederhana
+        $filename = 'laporan_penjualan_' . now()->format('d-m-Y') . '.xlsx';
+        
+        return Excel::download(new LaporanExport($filters), $filename);
     }
 
-    $transaksi = $query->orderBy('tanggal_waktu', 'desc')->get();
+    // Method untuk export PDF dengan detail lengkap
+    public function exportPdf(Request $request)
+    {
+        $filters = $this->extractFilters($request);
 
-    // Set PDF options
-    $pdf = PDF::loadView('laporan.laporan_pdf', compact('transaksi'))
-              ->setPaper('a4', 'portrait')
-              ->setOptions([
-                  'dpi' => 150,
-                  'defaultFont' => 'sans-serif',
-                  'isHtml5ParserEnabled' => true,
-                  'isRemoteEnabled' => true,
-              ]);
+        $query = Transaksi::with(['detailTransaksi.barang']);
 
-    // Buat nama file dengan format sederhana
-    $filename = 'laporan_penjualan_' . now()->format('d-m-Y') . '.pdf';
-    
-    return $pdf->download($filename);
-}
+        // Apply filters
+        if (!empty($filters['start_date'])) {
+            $query->whereDate('tanggal_waktu', '>=', $filters['start_date']);
+        }
+        if (!empty($filters['end_date'])) {
+            $query->whereDate('tanggal_waktu', '<=', $filters['end_date']);
+        }
+        if (!empty($filters['keyword'])) {
+            $keyword = $filters['keyword'];
+            $query->where(function($q) use ($keyword) {
+                $q->where('id_transaksi', 'like', "%$keyword%")
+                  ->orWhere('note', 'like', "%$keyword%");
+            });
+        }
+        if (!empty($filters['metode'])) {
+            $query->where('metode_pembayaran', $filters['metode']);
+        }
+        if (!empty($filters['harga_min'])) {
+            $query->where('total_harga', '>=', $filters['harga_min']);
+        }
+        if (!empty($filters['harga_max'])) {
+            $query->where('total_harga', '<=', $filters['harga_max']);
+        }
+
+        $transaksi = $query->orderBy('tanggal_waktu', 'desc')->get();
+
+        // Set PDF options
+        $pdf = PDF::loadView('laporan.laporan_pdf', compact('transaksi'))
+                  ->setPaper('a4', 'portrait')
+                  ->setOptions([
+                      'dpi' => 150,
+                      'defaultFont' => 'sans-serif',
+                      'isHtml5ParserEnabled' => true,
+                      'isRemoteEnabled' => true,
+                  ]);
+
+        // Buat nama file dengan format sederhana
+        $filename = 'laporan_penjualan_' . now()->format('d-m-Y') . '.pdf';
+        
+        return $pdf->download($filename);
+    }
 
     // Fungsi bantu untuk ekstrak filter dari request
     private function extractFilters($request)

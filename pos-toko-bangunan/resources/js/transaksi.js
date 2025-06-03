@@ -3,7 +3,7 @@ $(document).ready(function () {
     function calculateTotals() {
         let subTotal = 0;
         $('#salesTable tr').each(function () {
-            const total = parseInt($(this).find('td:eq(5)').text()) || 0;
+            const total = parseInt($(this).find('td:eq(6)').text()) || 0; // Index berubah karena ada kolom satuan
             subTotal += total;
         });
 
@@ -40,6 +40,10 @@ $(document).ready(function () {
         
         // Reset payment method ke default (biasanya cash)
         $('#paymentMethod').val('cash');
+        
+        // Reset tanggal ke hari ini dan kosongkan waktu
+        $('#date').val(new Date().toISOString().split('T')[0]);
+        $('#time').val('');
         
         // Trigger change event untuk payment method (jika ada handler)
         $('#paymentMethod').trigger('change');
@@ -128,6 +132,7 @@ $(document).ready(function () {
         const kode = tr.find('td:eq(0)').text();
         const nama = tr.data('nama');
         const harga = parseInt(tr.data('harga'));
+        const satuan = tr.data('satuan') || 'pcs'; // Ambil data satuan
         const stok = parseInt(tr.data('stok'));
         const qty = parseInt(tr.find('.qty-val').text());
         const total = harga * qty;
@@ -148,11 +153,12 @@ $(document).ready(function () {
         }
 
         const newRow = `
-        <tr data-id="${id}" data-stok="${stok}">
+        <tr data-id="${id}" data-stok="${stok}" data-satuan="${satuan}">
             <td>#</td>
             <td>${kode}</td>
             <td>${nama}</td>
             <td>${harga}</td>
+            <td>${satuan}</td>
             <td>${qty}</td>
             <td>${total}</td>
             <td>
@@ -183,8 +189,9 @@ $(document).ready(function () {
         const kode = row.find('td:eq(1)').text();
         const nama = row.find('td:eq(2)').text();
         const harga = row.find('td:eq(3)').text();
-        const qty = row.find('td:eq(4)').text();
-        const total = row.find('td:eq(5)').text();
+        const satuan = row.find('td:eq(4)').text();
+        const qty = row.find('td:eq(5)').text();
+        const total = row.find('td:eq(6)').text();
         const stok = row.data('stok');
 
         const formRow = `
@@ -193,6 +200,7 @@ $(document).ready(function () {
                 <td>${kode}</td>
                 <td>${nama}</td>
                 <td><input type="number" class="form-control form-harga" value="${harga}"></td>
+                <td>${satuan}</td>
                 <td><input type="number" class="form-control form-qty" value="${qty}" min="1" max="${stok}"></td>
                 <td><span class="form-total">${total}</span></td>
                 <td>
@@ -222,8 +230,8 @@ $(document).ready(function () {
 
         const originalRow = formRow.prev();
         originalRow.find('td:eq(3)').text(harga);
-        originalRow.find('td:eq(4)').text(qty);
-        originalRow.find('td:eq(5)').text(total);
+        originalRow.find('td:eq(5)').text(qty);
+        originalRow.find('td:eq(6)').text(total);
 
         formRow.remove();
         originalRow.show();
@@ -276,8 +284,9 @@ $(document).ready(function () {
             const kodeBarang = $(this).find('td:eq(1)').text();
             const namaBarang = $(this).find('td:eq(2)').text();
             const hargaBarang = parseInt($(this).find('td:eq(3)').text());
-            const jumlah = parseInt($(this).find('td:eq(4)').text());
-            const subtotal = parseInt($(this).find('td:eq(5)').text());
+            const satuanBarang = $(this).find('td:eq(4)').text(); // Ambil satuan
+            const jumlah = parseInt($(this).find('td:eq(5)').text());
+            const subtotal = parseInt($(this).find('td:eq(6)').text());
     
             // Ambil id_barang dari data barang yang sesuai
             const idBarang = $(this).data('id');
@@ -288,6 +297,7 @@ $(document).ready(function () {
                     kode_barang: kodeBarang,        // Menambahkan kode barang
                     nama_barang: namaBarang,        // Menambahkan nama barang
                     harga_barang: hargaBarang,      // Menambahkan harga barang
+                    satuan_barang: satuanBarang,    // Menambahkan satuan barang
                     jumlah: jumlah,
                     subtotal: subtotal,
                     note: note                      // Menambahkan note ke setiap item
@@ -303,9 +313,17 @@ $(document).ready(function () {
         const metodePembayaran = $('#paymentMethod').val();
         const totalHarga = parseInt($('#grandTotal').val()) || 0;
         const note = $('#note').val(); // Ambil nilai note
+        const tanggalTransaksi = $('#date').val(); // Ambil tanggal transaksi
+        const waktuTransaksi = $('#time').val(); // Ambil waktu transaksi (opsional)
     
         if (items.length === 0) {
             alert('Keranjang kosong!');
+            return;
+        }
+
+        // Validasi tanggal
+        if (!tanggalTransaksi) {
+            alert('Tanggal transaksi harus diisi!');
             return;
         }
     
@@ -316,6 +334,8 @@ $(document).ready(function () {
                 _token: $('meta[name="csrf-token"]').attr('content'),
                 metode_pembayaran: metodePembayaran,
                 total_harga: totalHarga,
+                tanggal_transaksi: tanggalTransaksi, // Kirim tanggal ke server
+                waktu_transaksi: waktuTransaksi, // Kirim waktu ke server (bisa kosong)
                 items: items,
                 note: note // Kirim note ke server
             },

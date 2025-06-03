@@ -49,6 +49,7 @@
                     <th class="text-left px-4 py-2">Nama Barang</th>
                     <th class="text-left px-4 py-2">Harga</th>
                     <th class="text-left px-4 py-2">Jumlah</th>
+                    <th class="text-left px-4 py-2">Satuan</th>
                     <th class="text-left px-4 py-2">Aksi</th>
                 </tr>
             </thead>
@@ -60,6 +61,7 @@
                         <td class="px-4 py-2">{{ $item->nama_barang }}</td>
                         <td class="px-4 py-2">Rp {{ number_format($item->harga_barang, 0, ',', '.') }}</td>
                         <td class="px-4 py-2">{{ $item->jumlah_barang }}</td>
+                        <td class="px-4 py-2">{{ $item->satuan_barang ?? '-' }}</td>
                         
                         <td class="px-4 py-2">
                             <div style="display: flex; gap: 10px; align-items: center;">
@@ -69,7 +71,8 @@
                                 data-kode="{{ $item->kode_barang }}"
                                 data-nama="{{ $item->nama_barang }}"
                                 data-harga="{{ $item->harga_barang }}"
-                                data-jumlah="{{ $item->jumlah_barang }}">
+                                data-jumlah="{{ $item->jumlah_barang }}"
+                                data-satuan="{{ $item->satuan_barang }}">
                                 Edit
                              </a>
                              
@@ -87,7 +90,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="px-4 py-4 text-center text-gray-500">Tidak ada data barang.</td>
+                        <td colspan="6" class="px-4 py-4 text-center text-gray-500">Tidak ada data barang.</td>
                     </tr>
                 @endforelse
             </tbody>
@@ -99,8 +102,6 @@
         {{ $barang->links() }}
     </div>
 </div>
-
-
 
 @endsection
 

@@ -141,13 +141,14 @@ function showDetail(idPembelian) {
         detailBody.innerHTML = '';
 
         if (!data || data.length === 0) {
-            detailBody.innerHTML = `<tr><td colspan="3" class="text-center py-4">Tidak ada detail pembelian.</td></tr>`;
+            detailBody.innerHTML = `<tr><td colspan="4" class="text-center py-4">Tidak ada detail pembelian.</td></tr>`;
         } else {
             data.forEach(item => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${item.nama_barang}</td>
                     <td>${item.jumlah}</td>
+                    <td>${item.satuan}</td>
                     <td>Rp ${Number(item.subtotal).toLocaleString('id-ID')}</td>
                 `;
                 detailBody.appendChild(tr);

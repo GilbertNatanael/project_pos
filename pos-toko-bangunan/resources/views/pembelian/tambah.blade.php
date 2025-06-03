@@ -25,16 +25,18 @@
                                 <th>Kode</th>
                                 <th>Nama</th>
                                 <th>Stok</th>
+                                <th>Satuan</th>
                                 <th>Harga</th>
                                 <th>Aksi</th>
                             </tr>
                         </thead>
                             <tbody id="daftarBarang">
                                 @foreach ($barang as $b)
-                                    <tr data-id="{{ $b->id_barang }}" data-nama="{{ $b->nama_barang }}" data-harga="{{ $b->harga_barang }}">
+                                    <tr data-id="{{ $b->id_barang }}" data-nama="{{ $b->nama_barang }}" data-harga="{{ $b->harga_barang }}" data-satuan="{{ $b->satuan_barang }}">
                                         <td>{{ $b->kode_barang }}</td>
                                         <td>{{ $b->nama_barang }}</td>
                                         <td>{{ $b->jumlah_barang }}</td>
+                                        <td>{{ $b->satuan_barang }}</td>
                                         <td>Rp {{ number_format($b->harga_barang, 0, ',', '.') }}</td>
                                         <td>
                                             <button class="btn btn-sm btn-success btn-tambah-barang">Tambah</button>
@@ -57,6 +59,7 @@
                             <tr>
                                 <th>Nama</th>
                                 <th>Qty</th>
+                                <th>Satuan</th>
                                 <th>Harga</th>
                                 <th>Subtotal</th>
                                 <th></th>
