@@ -84,18 +84,20 @@ window.predictSingle = async function () {
     const dateFrom = document.getElementById('date-from').value;
     const dateTo = document.getElementById('date-to').value;
 
-    // Validasi tanggal
     if (!dateFrom || !dateTo) {
         showError('Please select both from and to dates');
         return;
     }
 
+    // Pastikan rentang waktu valid
     if (new Date(dateFrom) >= new Date(dateTo)) {
         showError('From date must be before to date');
         return;
     }
 
-    // Validasi periode overlap di frontend
+    // Izinkan tanggal lampau — tidak perlu batasi ke masa depan
+
+    // Validasi overlap di frontend
     const overlapCheck = checkPeriodOverlap(item, dateFrom, dateTo);
     if (overlapCheck.hasOverlap) {
         showOverlapError({ details: overlapCheck.details });
@@ -122,7 +124,6 @@ window.predictSingle = async function () {
 
         if (data.error) {
             if (response.status === 422 && data.details) {
-                // Handle overlap error from backend
                 showOverlapError(data);
             } else {
                 throw new Error(data.error);
@@ -130,9 +131,8 @@ window.predictSingle = async function () {
             return;
         }
 
-        // Update used periods after successful prediction
         await loadUsedPeriods();
-        
+
         displaySingleResult(data);
         createChart([data]);
 
@@ -148,7 +148,6 @@ window.predictAll = async function () {
     const dateFrom = document.getElementById('date-from').value;
     const dateTo = document.getElementById('date-to').value;
 
-    // Validasi tanggal
     if (!dateFrom || !dateTo) {
         showError('Please select both from and to dates');
         return;
@@ -159,10 +158,9 @@ window.predictAll = async function () {
         return;
     }
 
-    // Validasi periode overlap untuk semua item di frontend
     const items = Array.from(document.getElementById('item-select').options).map(opt => opt.value);
     const overlappingItems = [];
-    
+
     for (const item of items) {
         const overlapCheck = checkPeriodOverlap(item, dateFrom, dateTo);
         if (overlapCheck.hasOverlap) {
@@ -172,7 +170,7 @@ window.predictAll = async function () {
             });
         }
     }
-    
+
     if (overlappingItems.length > 0) {
         showOverlapError({ overlapping_items: overlappingItems });
         return;
@@ -197,7 +195,6 @@ window.predictAll = async function () {
 
         if (data.error) {
             if (response.status === 422 && data.overlapping_items) {
-                // Handle overlap error from backend
                 showOverlapError(data);
             } else {
                 throw new Error(data.error);
@@ -205,9 +202,8 @@ window.predictAll = async function () {
             return;
         }
 
-        // Update used periods after successful prediction
         await loadUsedPeriods();
-        
+
         displayAllResults(data);
         createChartAll(data);
 
@@ -218,6 +214,7 @@ window.predictAll = async function () {
         showLoading(false);
     }
 };
+
 
 // Add visual indicators for unavailable dates
 function updateDateInputs() {

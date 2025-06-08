@@ -64,7 +64,7 @@ Route::post('/api/forecast/all', [SalesForecastController::class, 'predictAll'])
 // Route tambahan untuk melihat riwayat prediksi
 Route::get('/api/forecast/history', [SalesForecastController::class, 'getHistoricalPredictions'])->name('forecast.history');
 Route::get('/api/forecast/{id}', [SalesForecastController::class, 'getPredictionById'])->name('forecast.detail');
-
+Route::get('/api/forecast/available-dates/{item}', [SalesForecastController::class, 'getAvailableDates'])->name('forecast.available-dates');
 
 Route::get('/transaksi/detail/{id}', [TransaksiController::class, 'getDetail']);
 

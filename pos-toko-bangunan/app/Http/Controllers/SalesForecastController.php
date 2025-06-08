@@ -35,7 +35,7 @@ class SalesForecastController extends Controller
     {
         $request->validate([
             'item_name' => 'required|string',
-            'date_from' => 'required|date|after_or_equal:today',
+            'date_from' => 'required|date',
             'date_to' => 'required|date|after:date_from'
         ]);
 
@@ -91,7 +91,7 @@ class SalesForecastController extends Controller
     public function predictAll(Request $request): JsonResponse
     {
         $request->validate([
-            'date_from' => 'required|date|after_or_equal:today',
+            'date_from' => 'required|date',
             'date_to' => 'required|date|after:date_from'
         ]);
 

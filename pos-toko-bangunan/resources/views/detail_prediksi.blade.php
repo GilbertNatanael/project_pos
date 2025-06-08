@@ -47,7 +47,7 @@
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header bg-success text-white">
-                    <h5 class="mb-0"><i class="bi bi-graph-up"></i> Status Akurasi</h5>
+                    <h5 class="mb-0"><i class="bi bi-graph-up"></i> Data Saat ini</h5>
                 </div>
                 <div class="card-body">
                     <div id="accuracy-summary">

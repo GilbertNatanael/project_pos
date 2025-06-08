@@ -20,7 +20,7 @@ class DetailPrediksi {
     init(chartDataFromServer) {
         this.chartData = chartDataFromServer;
         this.initializeCharts();
-        this.calculateAccuracySummary(this.chartData);
+        this.calculateDataSummary(this.chartData);
     }
 
     // Initialize charts for each item
@@ -127,7 +127,7 @@ class DetailPrediksi {
                     <th>Tanggal</th>
                     <th>Prediksi (${satuan})</th>
                     <th>Aktual (${satuan})</th>
-                </tr>
+                    <th>Selisih (${satuan})</th>
             </thead>
             <tbody>`;
         
@@ -137,11 +137,21 @@ class DetailPrediksi {
             const aktualText = aktual.jumlah !== null ? this.formatNumber(aktual.jumlah, satuan) : 'Belum ada';
             const statusClass = aktual.jumlah !== null ? 'text-success' : 'text-muted';
             
+            let selisihText = 'Belum ada';
+            let selisihClass = 'text-muted';
+            
+            if (aktual.jumlah !== null) {
+                const selisih = Math.abs(parseFloat(pred.jumlah) - parseFloat(aktual.jumlah));
+                selisihText = this.formatNumber(selisih, satuan);
+                selisihClass = 'text-info';
+            }
+            
             tableHTML += `
                 <tr>
                     <td><small>${new Date(pred.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}</small></td>
                     <td><small>${prediksiFormatted}</small></td>
                     <td><small class="${statusClass}">${aktualText}</small></td>
+                    <td><small class="${selisihClass}">${selisihText}</small></td>
                 </tr>
             `;
         });
@@ -150,64 +160,57 @@ class DetailPrediksi {
         container.innerHTML = tableHTML;
     }
 
-    // Calculate and display accuracy summary
-    calculateAccuracySummary(chartData) {
-        let totalPredictions = 0;
-        let totalActual = 0;
+    // Calculate and display data summary with differences
+    calculateDataSummary(chartData) {
+        let totalPrediksi = 0;
+        let totalAktual = 0;
         let availableDataPoints = 0;
-        let accuratePoints = 0;
+        let totalSelisih = 0;
         
         chartData.forEach(item => {
             item.prediksi_data.forEach((pred, i) => {
                 const aktual = item.aktual_data[i];
-                totalPredictions++;
                 
                 if (aktual.jumlah !== null) {
                     availableDataPoints++;
-                    totalActual += parseFloat(aktual.jumlah);
-                    
-                    // Calculate accuracy with 20% tolerance
                     const predValue = parseFloat(pred.jumlah);
                     const aktualValue = parseFloat(aktual.jumlah);
-                    const tolerance = predValue * 0.2;
                     
-                    if (Math.abs(predValue - aktualValue) <= tolerance) {
-                        accuratePoints++;
-                    }
+                    totalPrediksi += predValue;
+                    totalAktual += aktualValue;
+                    totalSelisih += Math.abs(predValue - aktualValue);
                 }
             });
         });
         
-        const accuracyPercentage = availableDataPoints > 0 ? (accuratePoints / availableDataPoints * 100).toFixed(1) : 0;
-        const dataAvailability = (availableDataPoints / totalPredictions * 100).toFixed(1);
+        const rataRataSelisih = availableDataPoints > 0 ? (totalSelisih / availableDataPoints).toFixed(1) : 0;
+        const selisihTotal = (totalPrediksi - totalAktual).toFixed(1);
         
         const summaryHTML = `
             <div class="row text-center">
                 <div class="col-4">
-                    <h4 class="text-primary">${availableDataPoints}/${totalPredictions}</h4>
+                    <h4 class="text-primary">${availableDataPoints}</h4>
                     <small class="text-muted">Data Tersedia</small>
                 </div>
                 <div class="col-4">
-                    <h4 class="text-success">${accuracyPercentage}%</h4>
-                    <small class="text-muted">Akurasi</small>
+                    <h4 class="text-info">${rataRataSelisih}</h4>
+                    <small class="text-muted">Rata-rata Selisih</small>
                 </div>
                 <div class="col-4">
-                    <h4 class="text-warning">${dataAvailability}%</h4>
-                    <small class="text-muted">Kelengkapan Data</small>
+                    <h4 class="text-warning">${selisihTotal}</h4>
+                    <small class="text-muted">Total Selisih</small>
                 </div>
             </div>
             <hr>
             <div class="text-center">
                 <small class="text-muted">
-                    Akurasi dihitung dengan toleransi ±20% dari nilai prediksi
+                    Selisih dihitung dari |Prediksi - Aktual|
                 </small>
             </div>
         `;
         
         document.getElementById('accuracy-summary').innerHTML = summaryHTML;
     }
-
-    // Destroy all charts (useful for cleanup)
     destroyCharts() {
         this.charts.forEach(chart => {
             if (chart) {
