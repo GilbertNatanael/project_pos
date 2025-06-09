@@ -127,9 +127,6 @@ function attachEvents() {
         alert('Terjadi kesalahan: ' + error.message);
     });
 });
-
-
-
         // Filter pencarian barang
     document.getElementById('searchInput').addEventListener('keyup', function () {
         const keyword = this.value.toLowerCase();

@@ -2,7 +2,6 @@
 
 @section('content')
 <div class="container mx-auto px-4 py-6">
-    <!-- Notifikasi alert muncul di sini -->
     @if(session('success'))
         <div id="alert-success" class="alert alert-success">
             {{ session('success') }}

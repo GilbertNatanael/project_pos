@@ -161,3 +161,29 @@ body {
 .modal {
     z-index: 1050 !important;
 }
+/* Styling untuk preview struk */
+#strukContent {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 5px;
+    border: 1px solid #dee2e6;
+}
+
+#strukContent div {
+    line-height: 1.4;
+}
+
+/* Styling untuk flex layout dalam struk */
+#strukContent div[style*="display: flex"] {
+    display: flex !important;
+    justify-content: space-between !important;
+}
+
+/* Print media query untuk nanti */
+@media print {
+    #strukContent {
+        background-color: white !important;
+        border: none !important;
+        padding: 0 !important;
+    }
+}

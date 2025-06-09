@@ -3,14 +3,10 @@
 @section('styles')
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        /* Additional isolation for Bootstrap within forecast content */
         .forecast-content {
-            /* Reset any inherited sidebar styles */
             all: revert;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
         }
-        
-        /* Ensure Bootstrap works properly in forecast content */
         .forecast-content * {
             box-sizing: border-box;
         }

@@ -232,9 +232,6 @@ class SalesForecastController extends Controller
         ]);
     }
 
-    /**
-     * Simpan prediksi single item ke database
-     */
     private function saveSinglePrediction($request, $data, $stockInfo)
     {
         // Buat record prediksi utama
@@ -265,9 +262,6 @@ class SalesForecastController extends Controller
         }
     }
 
-    /**
-     * Simpan prediksi semua item ke database
-     */
     private function saveAllPredictions($request, $data)
     {
         // Buat record prediksi utama
@@ -303,9 +297,7 @@ class SalesForecastController extends Controller
             }
         }
     }
-    /**
-     * Hitung kapan barang akan habis berdasarkan stok dan prediksi penjualan
-     */
+
     private function calculateStockDepletion($itemName, $predictions)
     {
         try {
@@ -362,9 +354,6 @@ class SalesForecastController extends Controller
         }
     }
     
-    /**
-     * Tentukan level peringatan berdasarkan hari hingga habis
-     */
     private function getWarningLevel($daysUntilDepletion, $currentStock)
     {
         if ($currentStock <= 0) {
@@ -386,9 +375,6 @@ class SalesForecastController extends Controller
         }
     }
     
-    /**
-     * Generate pesan berdasarkan prediksi habis stok
-     */
     private function getDepletionMessage($daysUntilDepletion, $depletionDate)
     {
         if ($daysUntilDepletion === null) {
@@ -408,9 +394,6 @@ class SalesForecastController extends Controller
         }
     }
 
-    /**
-     * Get historical predictions - method tambahan untuk melihat riwayat prediksi
-     */
     public function getHistoricalPredictions(Request $request)
     {
         $prediksi = Prediksi::with(['detailPrediksi.dataPrediksi'])
@@ -421,9 +404,6 @@ class SalesForecastController extends Controller
         return response()->json($prediksi);
     }
 
-    /**
-     * Get prediction by ID - method tambahan untuk melihat detail prediksi
-     */
     public function getPredictionById($id)
     {
         $prediksi = Prediksi::with(['detailPrediksi.dataPrediksi'])

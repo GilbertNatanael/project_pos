@@ -8,9 +8,6 @@ use Illuminate\Support\Facades\Hash;
 
 class KaryawanController extends Controller
 {
-    /**
-     * Display a listing of the karyawan.
-     */
     public function index(Request $request)
     {
         $query = Karyawan::query();
@@ -29,18 +26,11 @@ class KaryawanController extends Controller
 
         return view('master.karyawan', compact('karyawan'));
     }
-
-    /**
-     * Show the form for creating a new karyawan.
-     */
     public function create()
     {
         return view('master.karyawan_create');
     }
 
-    /**
-     * Store a newly created karyawan in storage.
-     */
     public function store(Request $request)
     {
         // Validasi data
@@ -60,9 +50,6 @@ class KaryawanController extends Controller
         return redirect()->route('karyawan')->with('success', 'Karyawan berhasil ditambahkan.');
     }
 
-    /**
-     * Update the specified karyawan in storage.
-     */
     public function update(Request $request, $id)
     {
         $karyawan = Karyawan::findOrFail($id);
@@ -84,9 +71,6 @@ class KaryawanController extends Controller
         return redirect()->route('karyawan')->with('success', 'Karyawan berhasil diperbarui.');
     }
 
-    /**
-     * Remove the specified karyawan from storage.
-     */
     public function destroy($id)
     {
         $karyawan = Karyawan::findOrFail($id);

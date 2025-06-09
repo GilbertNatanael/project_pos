@@ -141,7 +141,7 @@ class TransaksiController extends Controller
         return response()->json($transaksi);
     }
 
-    // Method untuk export Excel dengan detail lengkap
+    // Method untuk export Excel 
     public function exportExcel(Request $request)
     {
         $filters = $this->extractFilters($request);
@@ -152,7 +152,7 @@ class TransaksiController extends Controller
         return Excel::download(new LaporanExport($filters), $filename);
     }
 
-    // Method untuk export PDF dengan detail lengkap
+    // Method untuk export PDF 
     public function exportPdf(Request $request)
     {
         $filters = $this->extractFilters($request);
@@ -195,13 +195,11 @@ class TransaksiController extends Controller
                       'isRemoteEnabled' => true,
                   ]);
 
-        // Buat nama file dengan format sederhana
         $filename = 'laporan_penjualan_' . now()->format('d-m-Y') . '.pdf';
         
         return $pdf->download($filename);
     }
 
-    // Fungsi bantu untuk ekstrak filter dari request
     private function extractFilters($request)
     {
         return [

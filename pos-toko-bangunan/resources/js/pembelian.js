@@ -2,15 +2,13 @@ document.addEventListener("DOMContentLoaded", function () {
     const modal = document.getElementById('modalDetail');
     const modalBackdrop = modal.querySelector('.modal-backdrop');
     
-    // IMMEDIATELY hide modal on page load - CRITICAL
     modal.style.display = 'none';
     modal.classList.add('hidden');
     modal.classList.remove('show');
-    
-    // Initialize data fetching after modal is properly hidden
+
     setTimeout(() => {
         fetchPembelian();
-    }, 50); // Small delay to ensure modal is hidden first
+    }, 50); 
 
     // Event: Close button
     document.getElementById('closeModal').addEventListener('click', (e) => {
@@ -18,49 +16,39 @@ document.addEventListener("DOMContentLoaded", function () {
         e.stopPropagation();
         hideModal();
     });
-    
-    // Event: Click on backdrop (outside modal content) to close
+
     modalBackdrop.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
         hideModal();
     });
 
-    // Prevent clicks inside modal content from closing the modal
     modal.querySelector('.modal-content').addEventListener('click', (e) => {
         e.stopPropagation();
     });
 
-    // ESC key to close modal
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
             hideModal();
         }
     });
 
-    // Helper function to hide modal completely
     function hideModal() {
         modal.style.display = 'none';
         modal.classList.add('hidden');
         modal.classList.remove('show');
         document.body.classList.remove('modal-open');
-        
-        // Re-enable all interactive elements
         enablePageInteraction(true);
     }
 
-    // Helper function to show modal completely
     function showModal() {
         modal.style.display = 'flex';
         modal.classList.remove('hidden');
         modal.classList.add('show');
         document.body.classList.add('modal-open');
-        
-        // Disable all interactive elements except modal
         enablePageInteraction(false);
     }
 
-    // Function to enable/disable page interaction
     function enablePageInteraction(enable) {
         const interactiveElements = document.querySelectorAll(
             'a:not(#modalDetail a), button:not(#modalDetail button), input:not(#modalDetail input), select:not(#modalDetail select), textarea:not(#modalDetail textarea), [tabindex]:not(#modalDetail [tabindex])'
@@ -83,8 +71,6 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     }
-
-    // Make functions available globally
     window.showModalHelper = showModal;
     window.hideModalHelper = hideModal;
 });

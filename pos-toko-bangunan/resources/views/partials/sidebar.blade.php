@@ -2,7 +2,6 @@
 <div class="sidebar">
     <div class="sidebar-header">POS System</div>
     
-    <!-- Scrollable menu container -->
     <div class="sidebar-menu-container">
         <ul class="sidebar-menu">
             @if(session('role') === 'owner')
@@ -33,7 +32,6 @@
         </ul>
     </div>
 
-    <!-- Fixed logout section at bottom -->
     <div class="logout">
         <form method="POST" action="{{ route('logout') }}">
             @csrf

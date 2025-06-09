@@ -118,13 +118,6 @@
                         <div class="col-md-6">
                             <input type="text" class="form-control" id="searchInput" placeholder="Cari nama atau kode barang...">
                         </div>
-                        <div class="col-md-6">
-                            <select class="form-select" id="filterKategori">
-                                <option value="">Semua Kategori</option>
-                                <option value="bangunan">Bangunan</option>
-                                <option value="makanan">Makanan</option>
-                            </select>
-                        </div>
                     </div>
 
                     <table class="table table-bordered">
@@ -152,9 +145,9 @@
                                 <td>{{ $item->satuan_barang ?? 'pcs' }}</td>
                                 <td>{{ $item->jumlah_barang }}</td>
                                 <td class="text-center">
-                                    <button class="btn-decrease px-2 py-1 bg-light border">-</button>
-                                    <span class="qty-val mx-2">1</span>
-                                    <button class="btn-increase px-2 py-1 bg-light border">+</button>
+                                    <input type="number" class="form-control qty-input d-inline-block" 
+                                        value="1" min="0.01" step="0.01" max="{{ $item->jumlah_barang }}" 
+                                        style="width: 80px; display: inline-block;">
                                 </td>
                                 <td class="text-center">
                                     <button class="btn btn-primary btn-add-barang">Tambah</button>
@@ -185,7 +178,31 @@
       </div>
     </div>
   </div>
-  
+<!-- Modal Preview Struk -->
+<div class="modal fade" id="previewStrukModal" tabindex="-1" aria-labelledby="previewStrukLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="previewStrukLabel">Preview Struk</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="max-height: 500px; overflow-y: auto;">
+                <div id="strukContent" class="text-center" style="background-color: #f8f9fa; padding: 20px; border-radius: 5px; border: 1px solid #dee2e6;">
+                    <!-- Isi struk akan diisi oleh JavaScript -->
+                    <p>Loading...</p>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-primary" id="btnPrintStruk">
+                    <i class="fas fa-print"></i> Print Struk
+                </button>
+                <button type="button" class="btn btn-success" id="btnSelesaiStruk">
+                    <i class="fas fa-check"></i> Selesai
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @section('scripts')

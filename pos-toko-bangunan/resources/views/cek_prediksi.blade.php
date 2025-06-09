@@ -49,10 +49,6 @@
         </div>
     </form>
 </div>
-
-
-
-    {{-- Tabel Prediksi (Hardcode) --}}
     <div class="table-wrapper">
         <table class="laporan-table">
             <thead>
