@@ -10,24 +10,31 @@ use Illuminate\Support\Facades\Auth;
 class BarangController extends Controller
 {
     public function index(Request $request)
-    {
-        $query = Barang::query();
+{
+    $query = Barang::query();
 
-        if ($request->filled('search')) {
-            $query->where('nama_barang', 'like', "%{$request->search}%")
-                  ->orWhere('kode_barang', 'like', "%{$request->search}%");
-        }
-
-        if ($request->filter == 'stok_habis') {
-            $query->where('jumlah_barang', '<=', 0);
-        } elseif ($request->filter == 'stok_tersedia') {
-            $query->where('jumlah_barang', '>', 0);
-        }
-
-        $barang = $query->orderBy('nama_barang')->paginate(10);
-
-        return view('master.barang', compact('barang'));
+    if ($request->filled('search')) {
+        $query->where('nama_barang', 'like', "%{$request->search}%")
+              ->orWhere('kode_barang', 'like', "%{$request->search}%");
     }
+
+    if ($request->filter == 'stok_habis') {
+        $query->where('jumlah_barang', '<=', 0);
+    } elseif ($request->filter == 'stok_tersedia') {
+        $query->where('jumlah_barang', '>', 0);
+    }
+
+    $barang = $query->orderBy('nama_barang')->paginate(10);
+
+    // Handle AJAX request untuk pagination
+    if ($request->ajax()) {
+        return response()->json([
+            'html' => view('master.barang', compact('barang'))->render()
+        ]);
+    }
+
+    return view('master.barang', compact('barang'));
+}
 
     public function transaksi()
     {
@@ -101,18 +108,22 @@ class BarangController extends Controller
     }
 
     // ✅ Method bantu untuk mencatat history
-    private function logHistory($id_barang, $aksi)
-    {
-        $id_karyawan = session('id_karyawan');
+private function logHistory($id_barang, $aksi)
+{
+    $id_karyawan = session('id_karyawan');
+    if (!$id_karyawan) return;
 
-        if (!$id_karyawan) return; // Jangan log jika tidak login
+    $barang = Barang::find($id_barang);
+    if (!$barang) return;
 
-        History::create([
-            'id_barang' => $id_barang,
-            'id_karyawan' => $id_karyawan,
-            'aksi' => $aksi
-        ]);
-    }
+    History::create([
+        'id_barang' => $barang->id_barang,
+        'id_karyawan' => $id_karyawan,
+        'aksi' => $aksi,
+        'nama_barang' => $barang->nama_barang // ✅ Simpan langsung nama barang
+    ]);
+}
+
 
     public function tambahPembelian()
     {

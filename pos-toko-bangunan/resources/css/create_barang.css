@@ -1,8 +1,16 @@
- /* Container */
- .container {
-    max-width: 600px;
-    margin-top: 50px;
+/* Page Container - Full height centering */
+.page-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
     padding: 20px;
+}
+
+/* Form wrapper - mengatur lebar maksimum form */
+.form-wrapper {
+    width: 100%;
+    max-width: 600px;
 }
 
 /* Form Styling */
@@ -125,4 +133,3 @@
     margin-top: 5px;
     margin-bottom: 30px;
 }
-

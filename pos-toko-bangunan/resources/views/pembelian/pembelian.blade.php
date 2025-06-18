@@ -35,18 +35,52 @@
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-200">
-
+                @forelse ($pembelian as $item)
+                    <tr>
+                        <td class="px-4 py-2">{{ $item->id_pembelian }}</td>
+                        <td class="px-4 py-2">{{ \Carbon\Carbon::parse($item->tanggal)->format('Y-m-d') }}</td>
+                        <td class="px-4 py-2">{{ $item->detailPembelian->sum('jumlah') }}</td>
+                        <td class="px-4 py-2">Rp {{ number_format($item->total, 0, ',', '.') }}</td>
+                        <td class="px-4 py-2">
+                            <button onclick="showDetail({{ $item->id_pembelian }})" class="text-blue-600 hover:underline">Detail</button>
+                        </td>
+                    </tr>
+                @empty
+                    <tr><td colspan="5" class="text-center px-4 py-2">Belum ada data pembelian.</td></tr>
+                @endforelse
             </tbody>
+
         </table>
     </div>
 
-    <!-- Placeholder Pagination -->
-    <div class="mt-4 pagination">
-        <a href="#">«</a>
-        <a href="#" class="active">1</a>
-        <a href="#">2</a>
-        <a href="#">»</a>
+{{-- Pagination untuk AJAX --}}
+@if ($pembelian->hasPages())
+    <div class="mt-4 pagination flex justify-center gap-1">
+        {{-- Tombol Sebelumnya --}}
+        @if ($pembelian->onFirstPage())
+            <span class="px-3 py-1 text-gray-400 cursor-not-allowed">«</span>
+        @else
+            <a href="{{ $pembelian->previousPageUrl() }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">«</a>
+        @endif
+
+        {{-- Nomor Halaman --}}
+        @foreach ($pembelian->getUrlRange(1, $pembelian->lastPage()) as $page => $url)
+            @if ($page == $pembelian->currentPage())
+                <span class="px-3 py-1 bg-blue-600 text-white rounded">{{ $page }}</span>
+            @else
+                <a href="{{ $url }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 page-link">{{ $page }}</a>
+            @endif
+        @endforeach
+
+        {{-- Tombol Selanjutnya --}}
+        @if ($pembelian->hasMorePages())
+            <a href="{{ $pembelian->nextPageUrl() }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">»</a>
+        @else
+            <span class="px-3 py-1 text-gray-400 cursor-not-allowed">»</span>
+        @endif
     </div>
+@endif
+
 </div>
 
 <!-- Modal Overlay - Full screen blocking overlay -->
@@ -69,7 +103,7 @@
                         </tr>
                     </thead>
                     <tbody id="detailBody">
-                        <!-- Data detail akan di-inject JS -->
+                        
                     </tbody>
                 </table>
             </div>

@@ -11,21 +11,22 @@ class History extends Model
     protected $fillable = [
         'id_barang',
         'id_karyawan',
-        'aksi'
+        'aksi',
+        'nama_barang'
     ];
+
 
     public $timestamps = true;
 
-    // Relasi dengan model Barang
+    // Relasi dengan model Barang - dengan foreign key dan local key yang eksplisit
     public function barang()
     {
-        return $this->belongsTo(Barang::class, 'id_barang');
+        return $this->belongsTo(Barang::class, 'id_barang', 'id_barang');
     }
 
-    // Relasi dengan model Karyawan
+    // Relasi dengan model Karyawan - dengan foreign key dan local key yang eksplisit
     public function karyawan()
     {
-        return $this->belongsTo(Karyawan::class, 'id_karyawan');
+        return $this->belongsTo(Karyawan::class, 'id_karyawan', 'id_karyawan');
     }
 }
-

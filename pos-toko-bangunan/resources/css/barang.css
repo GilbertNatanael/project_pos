@@ -299,3 +299,29 @@ form.inline-button {
 .alert-error {
     background-color: #dc3545;
 }
+.pagination a,
+.pagination span {
+    display: inline-block;
+    min-width: 30px;
+    text-align: center;
+    padding: 6px 12px;
+    margin: 0 2px;
+    border-radius: 4px;
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.pagination a {
+    background-color: #f1f5f9;
+    color: #333;
+    transition: background-color 0.2s ease;
+}
+
+.pagination a:hover {
+    background-color: #d1d5db;
+}
+
+.pagination .active {
+    background-color: #2563eb;
+    color: white;
+}

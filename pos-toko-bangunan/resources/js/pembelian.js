@@ -6,9 +6,10 @@ document.addEventListener("DOMContentLoaded", function () {
     modal.classList.add('hidden');
     modal.classList.remove('show');
 
-    setTimeout(() => {
-        fetchPembelian();
-    }, 50); 
+    // HAPUS atau KOMENTARI baris ini yang menyebabkan masalah
+    // setTimeout(() => {
+    //     fetchPembelian();
+    // }, 50); 
 
     // Event: Close button
     document.getElementById('closeModal').addEventListener('click', (e) => {
@@ -30,6 +31,15 @@ document.addEventListener("DOMContentLoaded", function () {
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
             hideModal();
+        }
+    });
+
+    // Handle pagination links dengan AJAX
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('page-link')) {
+            e.preventDefault();
+            const url = e.target.href;
+            fetchPembelianFromUrl(url);
         }
     });
 
@@ -75,20 +85,46 @@ document.addEventListener("DOMContentLoaded", function () {
     window.hideModalHelper = hideModal;
 });
 
-function fetchPembelian() {
-    fetch('/pembelian', {
+// Fungsi untuk fetch data dari URL pagination
+function fetchPembelianFromUrl(url) {
+    fetch(url, {
         headers: {
             'X-Requested-With': 'XMLHttpRequest'
         }
     })
-    .then(response => response.json())
-    .then(data => {
-        renderTable(data.data || []);
+    .then(response => response.text())
+    .then(html => {
+        // Parse HTML response dan ambil bagian tabel + pagination
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        // Update tabel
+        const newTbody = doc.querySelector('tbody');
+        const currentTbody = document.querySelector('tbody');
+        if (newTbody && currentTbody) {
+            currentTbody.innerHTML = newTbody.innerHTML;
+        }
+        
+        // Update pagination
+        const newPagination = doc.querySelector('.pagination');
+        const currentPagination = document.querySelector('.pagination');
+        if (newPagination && currentPagination) {
+            currentPagination.innerHTML = newPagination.innerHTML;
+        }
+        
+        // Update URL browser tanpa reload
+        window.history.pushState({}, '', url);
     })
     .catch(error => {
         console.error("Error fetching data:", error);
         showAlert('Terjadi kesalahan saat memuat data.', 'error');
     });
+}
+
+// Fungsi fetchPembelian hanya untuk refresh data di halaman yang sama
+function fetchPembelian() {
+    const currentUrl = window.location.href;
+    fetchPembelianFromUrl(currentUrl);
 }
 
 function renderTable(pembelians) {

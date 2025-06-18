@@ -8,6 +8,7 @@ use App\Models\Transaksi;
 use Illuminate\Http\Request;
 class LaporanController extends Controller
 {
+    
 public function export(Request $request)
 {
     $query = Transaksi::with('detailTransaksi.barang');

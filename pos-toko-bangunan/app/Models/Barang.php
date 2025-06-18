@@ -18,4 +18,9 @@ class Barang extends Model
     ];
 
     public $timestamps = true; // default-nya true, bisa dihilangkan kalau pakai timestamps
+
+        public function histories()
+    {
+        return $this->hasMany(History::class, 'id_barang', 'id_barang');
+    }
 }

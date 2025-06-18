@@ -60,3 +60,63 @@
 #salesChart {
     max-height: 300px;
 }
+.popular-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.popular-list li {
+    padding: 10px 0;
+    border-bottom: 1px solid #ddd;
+}
+
+.popular-list li:last-child {
+    border-bottom: none;
+}
+
+.popular-list strong {
+    font-size: 16px;
+    color: #2c3e50;
+}
+
+.terjual-info {
+    font-size: 14px;
+    color: #888;
+}
+.welcome-banner {
+    background-color: #e0ecff;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 12px;
+    text-align: center;
+    color: #2c3e50;
+}
+.stats-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.mini-card {
+    flex: 1;
+    min-width: 200px;
+    padding: 15px;
+    background-color: #f8f9fc;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    text-align: center;
+}
+
+.mini-card h4 {
+    margin-bottom: 6px;
+    font-size: 16px;
+    color: #4e73df;
+}
+
+.mini-card p {
+    font-size: 18px;
+    font-weight: bold;
+    color: #2c3e50;
+}

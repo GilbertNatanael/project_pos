@@ -84,8 +84,6 @@
         <i class="bi bi-download"></i> Export
     </button>
 </div>
-
-
     <div class="table-wrapper">
     <table class="laporan-table">
         <thead>
@@ -119,6 +117,36 @@
         </tbody>
     </table>
 </div>
+<!-- Pagination -->
+@if ($transaksi->hasPages())
+    <div class="pagination-container">
+        <div class="pagination">
+            {{-- Tombol Sebelumnya --}}
+            @if ($transaksi->onFirstPage())
+                <span>«</span>
+            @else
+                <a href="{{ $transaksi->previousPageUrl() }}">«</a>
+            @endif
+
+            {{-- Nomor Halaman --}}
+            @foreach ($transaksi->getUrlRange(1, $transaksi->lastPage()) as $page => $url)
+                @if ($page == $transaksi->currentPage())
+                    <span class="active">{{ $page }}</span>
+                @else
+                    <a href="{{ $url }}">{{ $page }}</a>
+                @endif
+            @endforeach
+
+            {{-- Tombol Selanjutnya --}}
+            @if ($transaksi->hasMorePages())
+                <a href="{{ $transaksi->nextPageUrl() }}">»</a>
+            @else
+                <span>»</span>
+            @endif
+        </div>
+        
+    </div>
+@endif
 <!-- Modal Detail Transaksi -->
 <div id="modal-detail" class="modal-overlay" style="display: none;">
     <div class="modal-content">

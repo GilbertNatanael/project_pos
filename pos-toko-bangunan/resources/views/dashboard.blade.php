@@ -3,52 +3,60 @@
 @section('content')
 <div class="dashboard-container">
     <h1>Dashboard</h1>
+    <div class="welcome-banner">
+        <h2>Selamat Datang di Dashboard</h2>
+        <p>Statistik toko bangunan X untuk {{ \Carbon\Carbon::now()->translatedFormat('F Y') }}</p>
+    </div>
 
-    <div class="stats">
-        <div class="card">
-            <h3>Total Income</h3>
+    <div class="stats-row">
+        <div class="card mini-card">
+            <h4>Total Income</h4>
             <p>Rp {{ number_format($totalIncome, 0, ',', '.') }}</p>
         </div>
+        <div class="card mini-card">
+            <h4>Transaksi Bulan Ini</h4>
+            <p>{{ $totalTransaksiBulanIni }} transaksi</p>
+        </div>
+        <div class="card mini-card">
+            <h4>Barang Terjual</h4>
+            <p>{{ $jumlahBarangTerjual }} pcs</p>
+        </div>
+        <div class="card mini-card">
+            <h4>Produk Aktif</h4>
+            <p>{{ $jumlahProdukAktif }} barang</p>
+        </div>
     </div>
+
+
 
     <div class="chart-container">
         <canvas id="salesChart"></canvas>
     </div>
 
     <div class="card-section">
-        <div class="card">
-            <h3>Barang Hampir Habis</h3>
-            <ul>
-                @foreach ($barangHampirHabis as $barang)
-                    <li>{{ $barang->nama_barang }} ({{ $barang->jumlah_barang }})</li>
-                @endforeach
-            </ul>
-        </div>
+        <!-- Hapus bagian Barang Hampir Habis -->
 
         <div class="card">
-            <h3>Barang Terpopuler</h3>
-            <ul>
-                @foreach ($barangTerpopuler as $item)
-                    <li>{{ $item->barang->nama_barang }} ({{ $item->total_terjual }} terjual)</li>
-                @endforeach
-            </ul>
-        </div>
-    </div>
+    <h3>5 Barang Terpopuler Bulan Ini</h3>
+    <ol class="popular-list">
+        @forelse ($barangTerpopuler as $index => $item)
+            <li>
+                <strong>#{{ $index + 1 }} {{ $item->barang->nama_barang }}</strong><br>
+                <span class="terjual-info">{{ $item->total_terjual }} terjual</span>
+            </li>
+        @empty
+            <li><em>Tidak ada penjualan bulan ini.</em></li>
+        @endforelse
+    </ol>
 </div>
 
-<!-- Modal Info Barang -->
-<div id="infoModal" class="modal">
-    <div class="modal-content">
-        <span class="close-btn">&times;</span>
-        <h2>Info Barang</h2>
-        <p>Detail info barang akan ditampilkan di sini.</p>
     </div>
 </div>
 @endsection
+
 <script>
     window.salesData = @json($penjualanBulanan->pluck('total'));
     window.salesLabels = @json($penjualanBulanan->pluck('bulan'));
 </script>
-
 
 @vite(['resources/css/dashboard.css', 'resources/js/dashboard.js'])

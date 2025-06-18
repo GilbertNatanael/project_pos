@@ -95,11 +95,33 @@
             </tbody>
         </table>
     </div>
+@if ($barang->hasPages())
+    <div class="mt-4 pagination flex justify-center gap-1">
+        {{-- Tombol Sebelumnya --}}
+        @if ($barang->onFirstPage())
+            <span class="px-3 py-1 text-gray-400 cursor-not-allowed">«</span>
+        @else
+            <a href="{{ $barang->previousPageUrl() }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">«</a>
+        @endif
 
-    <!-- Pagination -->
-    <div class="mt-4">
-        {{ $barang->links() }}
+        {{-- Nomor Halaman --}}
+        @foreach ($barang->getUrlRange(1, $barang->lastPage()) as $page => $url)
+            @if ($page == $barang->currentPage())
+                <span class="px-3 py-1 bg-blue-600 text-white rounded">{{ $page }}</span>
+            @else
+                <a href="{{ $url }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">{{ $page }}</a>
+            @endif
+        @endforeach
+
+        {{-- Tombol Selanjutnya --}}
+        @if ($barang->hasMorePages())
+            <a href="{{ $barang->nextPageUrl() }}" class="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300">»</a>
+        @else
+            <span class="px-3 py-1 text-gray-400 cursor-not-allowed">»</span>
+        @endif
     </div>
+@endif
+
 </div>
 
 @endsection

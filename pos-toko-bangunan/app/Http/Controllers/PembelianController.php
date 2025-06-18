@@ -12,23 +12,18 @@ class PembelianController extends Controller
 {
     public function index(Request $request)
     {
-        if ($request->ajax()) {
-            $pembelian = Pembelian::with('detailPembelian')
-                ->orderByDesc('tanggal')
-                ->get()
-                ->map(function ($p) {
-                    return [
-                        'id' => $p->id_pembelian,
-                        'tanggal' => date('Y-m-d', strtotime($p->tanggal)),
-                        'total_item' => $p->detailPembelian->sum('jumlah'),
-                        'total_harga' => number_format($p->total, 0, ',', '.'),
-                    ];
-                });
+        // Dapatkan data dengan pagination
+        $pembelian = Pembelian::with('detailPembelian')
+            ->orderByDesc('tanggal')
+            ->paginate(10);
 
-            return response()->json(['data' => $pembelian]);
+        // Jika request AJAX, kembalikan view yang sama (untuk pagination AJAX)
+        if ($request->ajax()) {
+            return view('pembelian.pembelian', compact('pembelian'))->render();
         }
 
-        return view('pembelian.pembelian');
+        // Untuk request normal, return view biasa
+        return view('pembelian.pembelian', compact('pembelian'));
     }
 
     public function tambah()

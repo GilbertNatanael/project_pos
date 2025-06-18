@@ -96,44 +96,48 @@ class TransaksiController extends Controller
         }
     }
 
-    public function laporan(Request $request)
-    {
-        $query = Transaksi::query();
+    // Ganti method laporan() di TransaksiController dengan yang ini:
 
-        // Filter tanggal
-        if ($request->filled('start_date')) {
-            $query->whereDate('tanggal_waktu', '>=', $request->start_date);
-        }
-        if ($request->filled('end_date')) {
-            $query->whereDate('tanggal_waktu', '<=', $request->end_date);
-        }
+public function laporan(Request $request)
+{
+    $query = Transaksi::query();
 
-        // Filter keyword (ID atau catatan)
-        if ($request->filled('keyword')) {
-            $keyword = $request->keyword;
-            $query->where(function ($q) use ($keyword) {
-                $q->where('id_transaksi', 'like', "%$keyword%")
-                  ->orWhere('note', 'like', "%$keyword%");
-            });
-        }
-
-        // Filter metode pembayaran
-        if ($request->filled('metode')) {
-            $query->where('metode_pembayaran', $request->metode);
-        }
-
-        // Filter range harga
-        if ($request->filled('harga_min')) {
-            $query->where('total_harga', '>=', $request->harga_min);
-        }
-        if ($request->filled('harga_max')) {
-            $query->where('total_harga', '<=', $request->harga_max);
-        }
-
-        $transaksi = $query->orderBy('tanggal_waktu', 'desc')->get();
-
-        return view('laporan', compact('transaksi'));
+    // Filter tanggal
+    if ($request->filled('start_date')) {
+        $query->whereDate('tanggal_waktu', '>=', $request->start_date);
     }
+    if ($request->filled('end_date')) {
+        $query->whereDate('tanggal_waktu', '<=', $request->end_date);
+    }
+
+    // Filter keyword (ID atau catatan)
+    if ($request->filled('keyword')) {
+        $keyword = $request->keyword;
+        $query->where(function ($q) use ($keyword) {
+            $q->where('id_transaksi', 'like', "%$keyword%")
+              ->orWhere('note', 'like', "%$keyword%");
+        });
+    }
+
+    // Filter metode pembayaran
+    if ($request->filled('metode')) {
+        $query->where('metode_pembayaran', $request->metode);
+    }
+
+    // Filter range harga
+    if ($request->filled('harga_min')) {
+        $query->where('total_harga', '>=', $request->harga_min);
+    }
+    if ($request->filled('harga_max')) {
+        $query->where('total_harga', '<=', $request->harga_max);
+    }
+
+    // Ubah dari get() ke paginate() dan tambahkan appends untuk mempertahankan filter
+    $transaksi = $query->orderBy('tanggal_waktu', 'desc')->paginate(10);
+    $transaksi->appends($request->query());
+
+    return view('laporan', compact('transaksi'));
+}
 
     public function getDetail($id)
     {
