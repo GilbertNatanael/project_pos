@@ -16,85 +16,126 @@ use Carbon\Carbon;
 class TransaksiController extends Controller
 {
     public function store(Request $request)
-    {
-        // Cek apakah admin (karyawan) sudah login
-        $adminId = Session::get('id_karyawan');
-        if (!$adminId) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
+{
+    // Cek apakah admin (karyawan) sudah login
+    $adminId = Session::get('id_karyawan');
+    if (!$adminId) {
+        return response()->json(['error' => 'Unauthorized'], 401);
+    }
 
-        // Validasi input
-        $request->validate([
-            'total_harga' => 'required|numeric',
-            'items' => 'required|array|min:1',
-            'items.*.id_barang' => 'required|integer',
-            'items.*.jumlah' => 'required|integer|min:1',
-            'items.*.subtotal' => 'required|numeric',
-            'metode_pembayaran' => 'required|string',
-            'tanggal_transaksi' => 'required|date',
-            'waktu_transaksi' => 'nullable|date_format:H:i', // Validasi format waktu (opsional)
-            'note' => 'nullable|string',
+    // Validasi input
+    $request->validate([
+        'total_harga' => 'required|numeric',
+        'items' => 'required|array|min:1',
+        'items.*.id_barang' => 'required|integer',
+        'items.*.jumlah' => 'required|integer|min:1',
+        'items.*.subtotal' => 'required|numeric',
+        'metode_pembayaran' => 'required|string',
+        'tanggal_transaksi' => 'required|date',
+        'waktu_transaksi' => 'nullable|date_format:H:i',
+        'note' => 'nullable|string',
+        'bank' => 'nullable|string',
+        'nomor_rekening' => 'nullable|string',
+    ]);
+
+    try {
+        DB::beginTransaction();
+
+        // Tentukan waktu transaksi
+        if ($request->filled('waktu_transaksi')) {
+            $tanggalWaktu = $request->tanggal_transaksi . ' ' . $request->waktu_transaksi . ':00';
+        } else {
+            $tanggalWaktu = $request->tanggal_transaksi . ' ' . now()->format('H:i:s');
+        }
+        
+        // Gabungkan note dengan informasi pembayaran
+        $combinedNote = $this->buildCombinedNote(
+            $request->metode_pembayaran,
+            $request->bank,
+            $request->nomor_rekening,
+            $request->note
+        );
+        
+        // Buat transaksi baru dengan tanggal dan waktu yang tepat
+        $transaksi = Transaksi::create([
+            'id_admin' => $adminId,
+            'tanggal_waktu' => $tanggalWaktu,
+            'total_harga' => $request->total_harga,
+            'metode_pembayaran' => $request->metode_pembayaran,
+            'note' => $combinedNote,
         ]);
 
-        try {
-            DB::beginTransaction();
-
-            // Tentukan waktu transaksi
-            if ($request->filled('waktu_transaksi')) {
-                // Jika waktu diisi secara manual, gunakan waktu tersebut
-                $tanggalWaktu = $request->tanggal_transaksi . ' ' . $request->waktu_transaksi . ':00';
-            } else {
-                // Jika waktu tidak diisi, gunakan waktu saat ini dengan tanggal yang dipilih
-                $tanggalWaktu = $request->tanggal_transaksi . ' ' . now()->format('H:i:s');
-            }
-            
-            // Buat transaksi baru dengan tanggal dan waktu yang tepat
-            $transaksi = Transaksi::create([
-                'id_admin' => $adminId,
-                'tanggal_waktu' => $tanggalWaktu,
-                'total_harga' => $request->total_harga,
-                'metode_pembayaran' => $request->metode_pembayaran,
-                'note' => $request->note,
+        // Simpan detail transaksi & kurangi stok barang
+        foreach ($request->items as $item) {
+            // Simpan detail transaksi
+            DetailTransaksi::create([
+                'id_transaksi' => $transaksi->id_transaksi,
+                'id_barang' => $item['id_barang'],
+                'jumlah' => $item['jumlah'],
+                'subtotal' => $item['subtotal'],
             ]);
 
-            // Simpan detail transaksi & kurangi stok barang
-            foreach ($request->items as $item) {
-                // Simpan detail transaksi
-                DetailTransaksi::create([
-                    'id_transaksi' => $transaksi->id_transaksi,
-                    'id_barang' => $item['id_barang'],
-                    'jumlah' => $item['jumlah'],
-                    'subtotal' => $item['subtotal'],
-                ]);
-
-                // Kurangi stok barang
-                $barang = Barang::find($item['id_barang']);
-                if ($barang) {
-                    if ($barang->jumlah_barang < $item['jumlah']) {
-                        throw new \Exception("Stok barang '{$barang->nama_barang}' tidak mencukupi.");
-                    }
-                    $barang->jumlah_barang -= $item['jumlah'];
-                    $barang->save();
-                } else {
-                    throw new \Exception("Barang dengan ID {$item['id_barang']} tidak ditemukan.");
+            // Kurangi stok barang
+            $barang = Barang::find($item['id_barang']);
+            if ($barang) {
+                if ($barang->jumlah_barang < $item['jumlah']) {
+                    throw new \Exception("Stok barang '{$barang->nama_barang}' tidak mencukupi.");
                 }
+                $barang->jumlah_barang -= $item['jumlah'];
+                $barang->save();
+            } else {
+                throw new \Exception("Barang dengan ID {$item['id_barang']} tidak ditemukan.");
             }
+        }
 
-            DB::commit();
+        DB::commit();
 
-            return response()->json([
-                'success' => true, 
-                'message' => 'Transaksi berhasil disimpan pada ' . Carbon::parse($tanggalWaktu)->format('d/m/Y H:i:s'),
-                'transaksi' => $transaksi
-            ], 201);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'error' => 'Transaksi gagal disimpan',
-                'message' => $e->getMessage(),
-            ], 500);
+        return response()->json([
+            'success' => true, 
+            'message' => 'Transaksi berhasil disimpan pada ' . Carbon::parse($tanggalWaktu)->format('d/m/Y H:i:s'),
+            'transaksi' => $transaksi
+        ], 201);
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return response()->json([
+            'error' => 'Transaksi gagal disimpan',
+            'message' => $e->getMessage(),
+        ], 500);
+    }
+}
+
+/**
+ * Gabungkan note dengan informasi pembayaran
+ */
+private function buildCombinedNote($metodePembayaran, $bank, $nomorRekening, $noteUser)
+{
+    $noteParts = [];
+    
+    // Tambahkan informasi bank dan rekening jika ada
+    if (in_array($metodePembayaran, ['card', 'transfer']) && ($bank || $nomorRekening)) {
+        $paymentInfo = [];
+        
+        if ($bank) {
+            $paymentInfo[] = "Bank: {$bank}";
+        }
+        
+        if ($nomorRekening) {
+            $paymentInfo[] = "No.Rek: {$nomorRekening}";
+        }
+        
+        if (!empty($paymentInfo)) {
+            $noteParts[] = implode(' | ', $paymentInfo);
         }
     }
+    
+    // Tambahkan note dari user jika ada
+    if (!empty($noteUser)) {
+        $noteParts[] = trim($noteUser);
+    }
+    
+    // Gabungkan dengan separator
+    return implode(' - ', $noteParts);
+}
 
     // Ganti method laporan() di TransaksiController dengan yang ini:
 

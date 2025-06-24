@@ -26,9 +26,6 @@
             <p>{{ $jumlahProdukAktif }} barang</p>
         </div>
     </div>
-
-
-
     <div class="chart-container">
         <canvas id="salesChart"></canvas>
     </div>

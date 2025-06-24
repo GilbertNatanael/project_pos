@@ -31,6 +31,7 @@
                                 <label for="kasir" class="mt-3">Kasir</label>
                                 <input type="text" class="form-control" id="kasir" name="kasir" value="{{ Session::get('username') }}" readonly>
                             </div>
+                            <!-- Dalam bagian form Payment Method, tambahkan setelah select payment method -->
                             <div class="col-md-6">
                                 <label for="paymentMethod">Payment Method</label>
                                 <select class="form-select" id="paymentMethod" name="paymentMethod">
@@ -39,6 +40,30 @@
                                     <option value="transfer">Transfer</option>
                                     <option value="qris">QRIS</option>
                                 </select>
+                                
+                                <!-- Field Bank - Hidden by default -->
+                                <div id="formBank" class="mt-3" style="display: none;">
+                                    <label for="bank">Bank</label>
+                                    <select class="form-select" id="bank" name="bank">
+                                        <option value="">Pilih Bank</option>
+                                        <option value="BCA">BCA</option>
+                                        <option value="BRI">BRI</option>
+                                        <option value="BNI">BNI</option>
+                                        <option value="Mandiri">Mandiri</option>
+                                        <option value="CIMB">CIMB Niaga</option>
+                                        <option value="Danamon">Danamon</option>
+                                        <option value="Permata">Permata</option>
+                                        <option value="BTN">BTN</option>
+                                        <option value="BSI">BSI</option>
+                                        <option value="Muamalat">Muamalat</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Field Nomor Rekening - Hidden by default -->
+                                <div id="formRekening" class="mt-3" style="display: none;">
+                                    <label for="nomorRekening">Nomor Rekening</label>
+                                    <input type="text" class="form-control" id="nomorRekening" name="nomorRekening" placeholder="Masukkan nomor rekening">
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -55,6 +80,8 @@
                                     <th>No</th>
                                     <th>Kode</th>
                                     <th>Nama Barang</th>
+                                    <th>Kategori</th>
+                                    <th>Merek</th>
                                     <th>Harga</th>
                                     <th>Satuan</th>
                                     <th>Pcs</th>
@@ -106,57 +133,62 @@
     </div>
 
     {{-- Modal Pilih Barang --}}
-    <div class="modal fade" id="barangModal" tabindex="-1" aria-labelledby="barangModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Pilih Barang</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="closeModal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <input type="text" class="form-control" id="searchInput" placeholder="Cari nama atau kode barang...">
-                        </div>
+<div class="modal fade" id="barangModal" tabindex="-1" aria-labelledby="barangModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl"> {{-- Ganti dari modal-lg ke modal-xl untuk width lebih besar --}}
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Pilih Barang</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" id="closeModal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <input type="text" class="form-control" id="searchInput" placeholder="Cari nama atau kode barang...">
                     </div>
-
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Kode</th>
-                                <th>Nama Barang</th>
-                                <th>Harga</th>
-                                <th>Satuan</th>
-                                <th>Stok</th>
-                                <th>Qty</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabelBarang">
-                            @foreach($barang as $item)
-                            <tr data-id="{{ $item->id_barang }}" 
-                                data-nama="{{ $item->nama_barang }}" 
-                                data-harga="{{ $item->harga_barang }}" 
-                                data-satuan="{{ $item->satuan_barang ?? 'pcs' }}"
-                                data-stok="{{ $item->jumlah_barang }}">
-                                <td>{{ $item->kode_barang }}</td>
-                                <td>{{ $item->nama_barang }}</td>
-                                <td>{{ number_format($item->harga_barang) }}</td>
-                                <td>{{ $item->satuan_barang ?? 'pcs' }}</td>
-                                <td>{{ $item->jumlah_barang }}</td>
-                                <td class="text-center">
-                                    <input type="number" class="form-control qty-input d-inline-block" 
-                                        value="1" min="0.01" step="0.01" max="{{ $item->jumlah_barang }}" 
-                                        style="width: 80px; display: inline-block;">
-                                </td>
-                                <td class="text-center">
-                                    <button class="btn btn-primary btn-add-barang">Tambah</button>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
                 </div>
+
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Kode</th>
+                            <th>Nama Barang</th>
+                            <th>Kategori</th>
+                            <th>Merek</th>
+                            <th>Harga</th>
+                            <th>Satuan</th>
+                            <th>Stok</th>
+                            <th>Qty</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelBarang">
+                        @foreach($barang as $item)
+                        <tr data-id="{{ $item->id_barang }}" 
+                            data-nama="{{ $item->nama_barang }}" 
+                            data-harga="{{ $item->harga_barang }}" 
+                            data-satuan="{{ $item->satuan_barang ?? 'pcs' }}"
+                            data-stok="{{ $item->jumlah_barang }}"
+                            data-kategori="{{ $item->kategori->nama_kategori ?? '-' }}"
+                            data-merek="{{ $item->merek ?? '-' }}">
+                            <td>{{ $item->kode_barang }}</td>
+                            <td>{{ $item->nama_barang }}</td>
+                            <td>{{ $item->kategori->nama_kategori ?? '-' }}</td>
+                            <td>{{ $item->merek ?? '-' }}</td>
+                            <td>{{ number_format($item->harga_barang) }}</td>
+                            <td>{{ $item->satuan_barang ?? 'pcs' }}</td>
+                            <td>{{ $item->jumlah_barang }}</td>
+                            <td class="text-center">
+                                <input type="number" class="form-control qty-input d-inline-block" 
+                                    value="1" min="0.01" step="0.01" max="{{ $item->jumlah_barang }}" 
+                                    style="width: 80px; display: inline-block;">
+                            </td>
+                            <td class="text-center">
+                                <button class="btn btn-primary btn-add-barang">Tambah</button>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

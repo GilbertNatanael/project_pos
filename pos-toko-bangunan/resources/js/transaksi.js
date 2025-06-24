@@ -13,72 +13,69 @@ $(document).ready(function () {
 
     // ==================== Perhitungan Total dengan Format Rupiah ====================
     function calculateTotals() {
-        let subTotal = 0;
-        $('#salesTable tr').each(function () {
-            const totalText = $(this).find('td:eq(6)').text();
-            const total = parseRupiah(totalText);
-            subTotal += total;
-        });
+    let subTotal = 0;
+    $('#salesTable tr').each(function () {
+        const totalText = $(this).find('td:eq(8)').text(); // Total di kolom ke-8
+        const total = parseRupiah(totalText);
+        subTotal += total;
+    });
 
-        const cashInput = $('#cash').val();
-        const cash = parseRupiah(cashInput);
-        const grandTotal = subTotal;
-        const change = cash - grandTotal;
+    const cashInput = $('#cash').val();
+    const cash = parseRupiah(cashInput);
+    const grandTotal = subTotal;
+    const change = cash - grandTotal;
 
-        // Update dengan format Rupiah
-        $('#subTotal').val(formatRupiah(subTotal));
-        $('#grandTotal').val(formatRupiah(grandTotal));
-        $('#change').val(formatRupiah(change));
-        $('.total-display').text(formatRupiah(grandTotal));
+    // Update dengan format Rupiah
+    $('#subTotal').val(formatRupiah(subTotal));
+    $('#grandTotal').val(formatRupiah(grandTotal));
+    $('#change').val(formatRupiah(change));
+    $('.total-display').text(formatRupiah(grandTotal));
 
-        // Simpan nilai numerik untuk perhitungan
-        $('#subTotal').data('numeric', subTotal);
-        $('#grandTotal').data('numeric', grandTotal);
-        $('#change').data('numeric', change);
-    }
-
-    function updateNumbering() {
-        $('#salesTable tr').each(function (index) {
-            $(this).find('td:first').text((index + 1) + '.');
-        });
-    }
+    // Simpan nilai numerik untuk perhitungan
+    $('#subTotal').data('numeric', subTotal);
+    $('#grandTotal').data('numeric', grandTotal);
+    $('#change').data('numeric', change);
+}
 
     // ==================== Fungsi Reset Lengkap ====================
-    function resetAllTransaction() {
-        // Reset tabel transaksi
-        $('#salesTable').empty();
-        
-        // Reset semua input form
-        $('#cash').val('');
-        $('#note').val('');
-        $('#subTotal').val(formatRupiah(0));
-        $('#grandTotal').val(formatRupiah(0));
-        $('#change').val(formatRupiah(0));
-        
-        // Reset display total
-        $('.total-display').text(formatRupiah(0));
-        
-        // Reset payment method ke default (biasanya cash)
-        $('#paymentMethod').val('cash');
-        
-        // Reset tanggal ke hari ini dan kosongkan waktu
-        $('#date').val(new Date().toISOString().split('T')[0]);
-        $('#time').val('');
-        
-        // Trigger change event untuk payment method (jika ada handler)
-        $('#paymentMethod').trigger('change');
-        
-        // Reset quantity di modal barang ke 1
-        $('#tabelBarang .qty-val').text('1');
-        
-        // Reset search dan filter di modal
-        $('#searchInput').val('');
-        $('#filterKategori').val('');
-        $('#tabelBarang tr').show();
-        
-        // Recalculate totals (akan menghasilkan 0)
-        calculateTotals();
-    }
+    // ==================== Fungsi Reset Lengkap (Update) ====================
+function resetAllTransaction() {
+    // Reset tabel transaksi
+    $('#salesTable').empty();
+    
+    // Reset semua input form
+    $('#cash').val('');
+    $('#note').val('');
+    $('#bank').val('');
+    $('#nomorRekening').val('');
+    $('#subTotal').val(formatRupiah(0));
+    $('#grandTotal').val(formatRupiah(0));
+    $('#change').val(formatRupiah(0));
+    
+    // Reset display total
+    $('.total-display').text(formatRupiah(0));
+    
+    // Reset payment method ke default (biasanya cash)
+    $('#paymentMethod').val('cash');
+    
+    // Reset tanggal ke hari ini dan kosongkan waktu
+    $('#date').val(new Date().toISOString().split('T')[0]);
+    $('#time').val('');
+    
+    // Trigger change event untuk payment method (jika ada handler)
+    $('#paymentMethod').trigger('change');
+    
+    // Reset quantity di modal barang ke 1
+    $('#tabelBarang .qty-val').text('1');
+    
+    // Reset search dan filter di modal
+    $('#searchInput').val('');
+    $('#filterKategori').val('');
+    $('#tabelBarang tr').show();
+    
+    // Recalculate totals (akan menghasilkan 0)
+    calculateTotals();
+}
 
     // Format input cash saat user mengetik
     $('#cash').on('input', function() {
@@ -121,72 +118,75 @@ $(document).ready(function () {
 
     // ==================== Tambah Barang ke Tabel Transaksi ====================
     $(document).on('click', '.btn-add-barang', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
+    e.preventDefault();
+    e.stopPropagation();
 
-        const tr = $(this).closest('tr');
-        const id = tr.data('id');
-        const kode = tr.find('td:eq(0)').text();
-        const nama = tr.data('nama');
-        const harga = parseInt(tr.data('harga'));
-        const satuan = tr.data('satuan') || 'pcs';
-        const stok = parseInt(tr.data('stok'));
-        const qty = parseFloat(tr.find('.qty-input').val()) || 1;
-        const total = harga * qty;
+    const tr = $(this).closest('tr');
+    const id = tr.data('id');
+    const kode = tr.find('td:eq(0)').text();
+    const nama = tr.data('nama');
+    const kategori = tr.data('kategori') || '-';
+    const merek = tr.data('merek') || '-';
+    const harga = parseInt(tr.data('harga'));
+    const satuan = tr.data('satuan') || 'pcs';
+    const stok = parseInt(tr.data('stok'));
+    const qty = parseFloat(tr.find('.qty-input').val()) || 1;
+    const total = harga * qty;
 
-        // Validasi quantity
-        if (qty <= 0) {
-            alert('Quantity harus lebih dari 0!');
-            return;
+    // Validasi quantity
+    if (qty <= 0) {
+        alert('Quantity harus lebih dari 0!');
+        return;
+    }
+
+    if (qty > stok) {
+        alert('Quantity melebihi stok yang tersedia!');
+        return;
+    }
+
+    // Cek apakah barang sudah ada di #salesTable
+    let exists = false;
+    $('#salesTable tr').each(function () {
+        const kodeBarang = $(this).find('td:eq(1)').text();
+        if (kodeBarang === kode) {
+            exists = true;
+            return false;
         }
-
-        if (qty > stok) {
-            alert('Quantity melebihi stok yang tersedia!');
-            return;
-        }
-
-        // Cek apakah barang sudah ada di #salesTable
-        let exists = false;
-        $('#salesTable tr').each(function () {
-            const kodeBarang = $(this).find('td:eq(1)').text();
-            if (kodeBarang === kode) {
-                exists = true;
-                return false;
-            }
-        });
-
-        if (exists) {
-            alert('Barang sudah ada di keranjang. Silakan update jumlahnya jika ingin mengubah.');
-            return;
-        }
-
-        const newRow = `
-        <tr data-id="${id}" data-stok="${stok}" data-satuan="${satuan}">
-            <td>#</td>
-            <td>${kode}</td>
-            <td>${nama}</td>
-            <td>${formatRupiah(harga)}</td>
-            <td>${satuan}</td>
-            <td>${qty}</td>
-            <td>${formatRupiah(total)}</td>
-            <td>
-                <button class="btn btn-sm btn-warning btn-update"><i class="fas fa-edit"></i> Update</button>
-                <button class="btn btn-sm btn-danger btn-delete"><i class="fas fa-trash"></i> Delete</button>
-            </td>
-        </tr>
-    `;
-    
-        $('#salesTable').append(newRow);
-        updateRowNumbers();
-        calculateTotals();
-
-        // Reset quantity input ke 1
-        tr.find('.qty-input').val(1);
-
-        const barangModal = bootstrap.Modal.getInstance(document.getElementById('barangModal'));
-        barangModal.hide();
     });
 
+    if (exists) {
+        alert('Barang sudah ada di keranjang. Silakan update jumlahnya jika ingin mengubah.');
+        return;
+    }
+
+    const newRow = `
+    <tr data-id="${id}" data-stok="${stok}" data-satuan="${satuan}" data-kategori="${kategori}" data-merek="${merek}">
+        <td>#</td>
+        <td>${kode}</td>
+        <td>${nama}</td>
+        <td>${kategori}</td>
+        <td>${merek}</td>
+        <td>${formatRupiah(harga)}</td>
+        <td>${satuan}</td>
+        <td>${qty}</td>
+        <td>${formatRupiah(total)}</td>
+        <td>
+            <button class="btn btn-sm btn-warning btn-update"><i class="fas fa-edit"></i> Update</button>
+            <button class="btn btn-sm btn-danger btn-delete"><i class="fas fa-trash"></i> Delete</button>
+        </td>
+    </tr>
+`;
+
+    $('#salesTable').append(newRow);
+    updateRowNumbers();
+    calculateTotals();
+
+    // Reset quantity input ke 1
+    tr.find('.qty-input').val(1);
+
+    const barangModal = bootstrap.Modal.getInstance(document.getElementById('barangModal'));
+    barangModal.hide();
+});
     // ==================== Hapus Barang dari Tabel ====================
     $(document).on('click', '.btn-delete', function () {
         $(this).closest('tr').remove();
@@ -196,37 +196,41 @@ $(document).ready(function () {
 
     // ==================== Edit (Update) Barang di Tabel ====================
     $(document).on('click', '.btn-update', function () {
-        const row = $(this).closest('tr');
-        const kode = row.find('td:eq(1)').text();
-        const nama = row.find('td:eq(2)').text();
-        const hargaText = row.find('td:eq(3)').text();
-        const harga = parseRupiah(hargaText);
-        const satuan = row.find('td:eq(4)').text();
-        const qty = row.find('td:eq(5)').text();
-        const totalText = row.find('td:eq(6)').text();
-        const total = parseRupiah(totalText);
-        const stok = row.data('stok');
+    const row = $(this).closest('tr');
+    const kode = row.find('td:eq(1)').text();
+    const nama = row.find('td:eq(2)').text();
+    const kategori = row.find('td:eq(3)').text();
+    const merek = row.find('td:eq(4)').text();
+    const hargaText = row.find('td:eq(5)').text();
+    const harga = parseRupiah(hargaText);
+    const satuan = row.find('td:eq(6)').text();
+    const qty = row.find('td:eq(7)').text();
+    const totalText = row.find('td:eq(8)').text();
+    const total = parseRupiah(totalText);
+    const stok = row.data('stok');
 
-        const formRow = `
-            <tr class="edit-row">
-                <td>#</td>
-                <td>${kode}</td>
-                <td>${nama}</td>
-                <td><input type="text" class="form-control form-harga" value="${formatRupiah(harga)}"></td>
-                <td>${satuan}</td>
-                <td><input type="number" class="form-control form-qty" value="${qty}" min="1" max="${stok}"></td>
-                <td><span class="form-total">${formatRupiah(total)}</span></td>
-                <td>
-                    <input type="hidden" class="form-stok" value="${stok}">
-                    <button class="btn btn-sm btn-save">Simpan</button>
-                    <button class="btn btn-sm btn-cancel-edit">Batal</button>
-                </td>
-            </tr>
-        `;
+    const formRow = `
+        <tr class="edit-row">
+            <td>#</td>
+            <td>${kode}</td>
+            <td>${nama}</td>
+            <td>${kategori}</td>
+            <td>${merek}</td>
+            <td><input type="text" class="form-control form-harga" value="${formatRupiah(harga)}"></td>
+            <td>${satuan}</td>
+            <td><input type="number" class="form-control form-qty" value="${qty}" min="1" max="${stok}"></td>
+            <td><span class="form-total">${formatRupiah(total)}</span></td>
+            <td>
+                <input type="hidden" class="form-stok" value="${stok}">
+                <button class="btn btn-sm btn-save">Simpan</button>
+                <button class="btn btn-sm btn-cancel-edit">Batal</button>
+            </td>
+        </tr>
+    `;
 
-        row.hide();
-        row.after(formRow);
-    });
+    row.hide();
+    row.after(formRow);
+});
 
     // Handler untuk format harga saat edit
     $(document).on('input', '.form-harga', function() {
@@ -250,29 +254,29 @@ $(document).ready(function () {
     }
 
     $(document).on('click', '.btn-save', function () {
-        const formRow = $(this).closest('tr');
-        const hargaText = formRow.find('.form-harga').val();
-        const harga = parseRupiah(hargaText);
-        const qty = parseInt(formRow.find('.form-qty').val());
-        const stok = parseInt(formRow.find('.form-stok').val());
+    const formRow = $(this).closest('tr');
+    const hargaText = formRow.find('.form-harga').val();
+    const harga = parseRupiah(hargaText);
+    const qty = parseInt(formRow.find('.form-qty').val());
+    const stok = parseInt(formRow.find('.form-stok').val());
 
-        if (qty > stok) {
-            alert('Jumlah melebihi stok yang tersedia!');
-            return;
-        }
+    if (qty > stok) {
+        alert('Jumlah melebihi stok yang tersedia!');
+        return;
+    }
 
-        const total = harga * qty;
+    const total = harga * qty;
 
-        const originalRow = formRow.prev();
-        originalRow.find('td:eq(3)').text(formatRupiah(harga));
-        originalRow.find('td:eq(5)').text(qty);
-        originalRow.find('td:eq(6)').text(formatRupiah(total));
+    const originalRow = formRow.prev();
+    originalRow.find('td:eq(5)').text(formatRupiah(harga)); // Harga di kolom ke-5 (0-indexed)
+    originalRow.find('td:eq(7)').text(qty); // Qty di kolom ke-7
+    originalRow.find('td:eq(8)').text(formatRupiah(total)); // Total di kolom ke-8
 
-        formRow.remove();
-        originalRow.show();
+    formRow.remove();
+    originalRow.show();
 
-        calculateTotals();
-    });
+    calculateTotals();
+});
 
     $(document).on('click', '.btn-cancel-edit', function () {
         const formRow = $(this).closest('tr');
@@ -281,128 +285,166 @@ $(document).ready(function () {
         originalRow.show();
     });
 
-    // ==================== Toggle Input Cash/Change ====================
-    function toggleCashFields() {
-        const paymentMethod = $('#paymentMethod').val();
-        if (paymentMethod === 'cash') {
-            $('#formCash, #formChange').show();
-        } else {
-            $('#formCash, #formChange').hide();
-        }
+// ==================== Toggle Input Cash/Change dan Bank/Rekening ====================
+function toggleCashFields() {
+    const paymentMethod = $('#paymentMethod').val();
+    
+    if (paymentMethod === 'cash') {
+        $('#formCash, #formChange').show();
+        $('#formBank, #formRekening').hide();
+        // Reset nilai bank dan rekening
+        $('#bank').val('');
+        $('#nomorRekening').val('');
+    } else if (paymentMethod === 'card' || paymentMethod === 'transfer') {
+        $('#formCash, #formChange').hide();
+        $('#formBank, #formRekening').show();
+        // Reset nilai cash dan change
+        $('#cash').val('');
+        $('#change').val(formatRupiah(0));
+    } else {
+        $('#formCash, #formChange').hide();
+        $('#formBank, #formRekening').hide();
+        // Reset semua nilai
+        $('#cash').val('');
+        $('#change').val(formatRupiah(0));
+        $('#bank').val('');
+        $('#nomorRekening').val('');
     }
+}
 
     toggleCashFields();
     $('#paymentMethod').on('change', toggleCashFields);
 
-    // ==================== Proses dan Batal ====================
+    // ==================== Proses dan Batal (Update untuk validasi) ====================
     $('.btn-process').click(function () {
         const metodePembayaran = $('#paymentMethod').val();
         const grandTotal = $('#grandTotal').data('numeric') || 0;
         const cashInput = $('#cash').val();
         const cash = parseRupiah(cashInput);
-    
+        const bank = $('#bank').val();
+        const nomorRekening = $('#nomorRekening').val();
+
+        // Validasi berdasarkan metode pembayaran
         if (metodePembayaran === 'cash') {
             if (!cash || cash < grandTotal) {
                 alert('Uang tunai tidak cukup untuk membayar total belanja!');
                 return;
             }
+        } else if (metodePembayaran === 'card' || metodePembayaran === 'transfer') {
+            if (!bank) {
+                alert('Pilih bank terlebih dahulu!');
+                return;
+            }
+            if (!nomorRekening || nomorRekening.trim() === '') {
+                alert('Nomor rekening harus diisi!');
+                return;
+            }
         }
-    
+
         const pembayaranModal = new bootstrap.Modal(document.getElementById('menungguPembayaranModal'));
         pembayaranModal.show();
     });
     
     function getCartItems() {
-        const items = [];
-        const note = $('#note').val();
-    
-        $('#salesTable tr').each(function () {
-            const kodeBarang = $(this).find('td:eq(1)').text();
-            const namaBarang = $(this).find('td:eq(2)').text();
-            const hargaText = $(this).find('td:eq(3)').text();
-            const hargaBarang = parseRupiah(hargaText);
-            const satuanBarang = $(this).find('td:eq(4)').text();
-            const jumlah = parseInt($(this).find('td:eq(5)').text());
-            const subtotalText = $(this).find('td:eq(6)').text();
-            const subtotal = parseRupiah(subtotalText);
-    
-            const idBarang = $(this).data('id');
-    
-            if (idBarang && jumlah > 0) {
-                items.push({
-                    id_barang: idBarang,
-                    kode_barang: kodeBarang,
-                    nama_barang: namaBarang,
-                    harga_barang: hargaBarang,
-                    satuan_barang: satuanBarang,
-                    jumlah: jumlah,
-                    subtotal: subtotal,
-                    note: note
-                });
-            }
-        });
-    
-        return items;
-    }
-    
-    $('.btn-selesai-pembayaran').click(function () {
-        console.log('Tombol selesai pembayaran diklik');
-        
-        const items = getCartItems();
-        const metodePembayaran = $('#paymentMethod').val();
-        const totalHarga = $('#grandTotal').data('numeric') || 0;
-        const note = $('#note').val();
-        const tanggalTransaksi = $('#date').val();
-        const waktuTransaksi = $('#time').val();
-    
-        console.log('Data transaksi:', { items, metodePembayaran, totalHarga, note, tanggalTransaksi, waktuTransaksi });
-    
-        if (items.length === 0) {
-            alert('Keranjang kosong!');
-            return;
-        }
+    const items = [];
+    const note = $('#note').val();
 
-        if (!tanggalTransaksi) {
-            alert('Tanggal transaksi harus diisi!');
-            return;
-        }
-    
-        $.ajax({
-            url: '/transaksi/store',
-            type: 'POST',
-            data: {
-                _token: $('meta[name="csrf-token"]').attr('content'),
-                metode_pembayaran: metodePembayaran,
-                total_harga: totalHarga,
-                tanggal_transaksi: tanggalTransaksi,
-                waktu_transaksi: waktuTransaksi,
-                items: items,
+    $('#salesTable tr').each(function () {
+        const kodeBarang = $(this).find('td:eq(1)').text();
+        const namaBarang = $(this).find('td:eq(2)').text();
+        const kategori = $(this).find('td:eq(3)').text();
+        const merek = $(this).find('td:eq(4)').text();
+        const hargaText = $(this).find('td:eq(5)').text();
+        const hargaBarang = parseRupiah(hargaText);
+        const satuanBarang = $(this).find('td:eq(6)').text();
+        const jumlah = parseInt($(this).find('td:eq(7)').text());
+        const subtotalText = $(this).find('td:eq(8)').text();
+        const subtotal = parseRupiah(subtotalText);
+
+        const idBarang = $(this).data('id');
+
+        if (idBarang && jumlah > 0) {
+            items.push({
+                id_barang: idBarang,
+                kode_barang: kodeBarang,
+                nama_barang: namaBarang,
+                kategori: kategori,
+                merek: merek,
+                harga_barang: hargaBarang,
+                satuan_barang: satuanBarang,
+                jumlah: jumlah,
+                subtotal: subtotal,
                 note: note
-            },
-            success: function (response) {
-                console.log('Response dari server:', response);
-                
-                const modalMenunggu = bootstrap.Modal.getInstance(document.getElementById('menungguPembayaranModal'));
-                if (modalMenunggu) {
-                    modalMenunggu.hide();
-                }
-    
-                setTimeout(function() {
-                    generatePreviewStruk(response.transaksi, items);
-                    
-                    console.log('Mencoba menampilkan modal preview');
-                    
-                    const modalPreview = new bootstrap.Modal(document.getElementById('previewStrukModal'));
-                    modalPreview.show();
-                }, 500);
-            },
-    
-            error: function (xhr) {
-                console.log('Error response:', xhr);
-                alert(xhr.responseJSON?.message || 'Gagal menyimpan transaksi.');
-            }
-        });
+            });
+        }
     });
+
+    return items;
+}
+    
+    // Update dalam function $('.btn-selesai-pembayaran').click - bagian AJAX
+$('.btn-selesai-pembayaran').click(function () {
+    console.log('Tombol selesai pembayaran diklik');
+    
+    const items = getCartItems();
+    const metodePembayaran = $('#paymentMethod').val();
+    const totalHarga = $('#grandTotal').data('numeric') || 0;
+    const note = $('#note').val();
+    const tanggalTransaksi = $('#date').val();
+    const waktuTransaksi = $('#time').val();
+    const bank = $('#bank').val();
+    const nomorRekening = $('#nomorRekening').val();
+
+    console.log('Data transaksi:', { items, metodePembayaran, totalHarga, note, tanggalTransaksi, waktuTransaksi, bank, nomorRekening });
+
+    if (items.length === 0) {
+        alert('Keranjang kosong!');
+        return;
+    }
+
+    if (!tanggalTransaksi) {
+        alert('Tanggal transaksi harus diisi!');
+        return;
+    }
+
+    $.ajax({
+        url: '/transaksi/store',
+        type: 'POST',
+        data: {
+            _token: $('meta[name="csrf-token"]').attr('content'),
+            metode_pembayaran: metodePembayaran,
+            total_harga: totalHarga,
+            tanggal_transaksi: tanggalTransaksi,
+            waktu_transaksi: waktuTransaksi,
+            bank: bank,
+            nomor_rekening: nomorRekening, // Perubahan dari 'nomor_rekening' ke 'nomor_rekening'
+            items: items,
+            note: note
+        },
+        success: function (response) {
+            console.log('Response dari server:', response);
+            
+            const modalMenunggu = bootstrap.Modal.getInstance(document.getElementById('menungguPembayaranModal'));
+            if (modalMenunggu) {
+                modalMenunggu.hide();
+            }
+
+            setTimeout(function() {
+                generatePreviewStruk(response.transaksi, items);
+                
+                console.log('Mencoba menampilkan modal preview');
+                
+                const modalPreview = new bootstrap.Modal(document.getElementById('previewStrukModal'));
+                modalPreview.show();
+            }, 500);
+        },
+
+        error: function (xhr) {
+            console.log('Error response:', xhr);
+            alert(xhr.responseJSON?.message || 'Gagal menyimpan transaksi.');
+        }
+    });
+});
 
     // Function untuk generate preview struk dengan format Rupiah
     function generatePreviewStruk(transaksi, items) {

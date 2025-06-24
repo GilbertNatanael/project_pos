@@ -58,8 +58,6 @@
                                 data-role="{{ $item->role }}">
                                 Edit
                              </a>
-                             
-            
                                 <form action="{{ route('karyawan.destroy', $item->id_karyawan) }}" 
                                       method="POST" onsubmit="return confirm('Yakin hapus karyawan ini?')"
                                       style="margin: 0;">

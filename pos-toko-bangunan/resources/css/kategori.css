@@ -200,9 +200,6 @@ tbody tr:hover {
 }
 
 /* ... (tetap gunakan deklarasi root dan style sebelumnya) ... */
-body {
-    overflow-x: hidden;
-}
 
 /* Table Column Styling: Lebar kolom disesuaikan */
 table th:nth-child(1),
@@ -301,96 +298,4 @@ form.inline-button {
 
 .alert-error {
     background-color: #dc3545;
-}
-.pagination a,
-.pagination span {
-    display: inline-block;
-    min-width: 30px;
-    text-align: center;
-    padding: 6px 12px;
-    margin: 0 2px;
-    border-radius: 4px;
-    font-weight: 500;
-    text-decoration: none;
-}
-
-.pagination a {
-    background-color: #f1f5f9;
-    color: #333;
-    transition: background-color 0.2s ease;
-}
-
-.pagination a:hover {
-    background-color: #d1d5db;
-}
-
-.pagination .active {
-    background-color: #2563eb;
-    color: white;
-}
-/* Tambahan CSS untuk mencegah layout shift */
-
-/* Pastikan container memiliki lebar yang konsisten */
-.container {
-    width: 100%;
-    box-sizing: border-box;
-}
-
-/* Table container harus memiliki lebar yang tetap */
-.bg-white.shadow.rounded.overflow-x-auto {
-    width: 100%;
-    box-sizing: border-box;
-    min-height: 400px; /* Minimum tinggi untuk menghindari jumping */
-}
-
-/* Table styling untuk konsistensi */
-table {
-    width: 100%;
-    table-layout: fixed; /* Membuat kolom memiliki lebar yang konsisten */
-    border-collapse: collapse;
-}
-
-/* Lebar kolom yang konsisten */
-table th:nth-child(1), table td:nth-child(1) { width: 12%; } /* Kode */
-table th:nth-child(2), table td:nth-child(2) { width: 20%; } /* Nama */
-table th:nth-child(3), table td:nth-child(3) { width: 15%; } /* Merk */
-table th:nth-child(4), table td:nth-child(4) { width: 15%; } /* Kategori */
-table th:nth-child(5), table td:nth-child(5) { width: 10%; } /* Satuan */
-table th:nth-child(6), table td:nth-child(6) { width: 8%; }  /* Jumlah */
-table th:nth-child(7), table td:nth-child(7) { width: 12%; } /* Harga */
-table th:nth-child(8), table td:nth-child(8) { width: 8%; }  /* Aksi */
-
-/* Prevent text overflow */
-table td {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-/* Pagination container styling */
-.pagination {
-    width: 100%;
-    justify-content: center;
-    padding: 20px 0;
-}
-
-/* Prevent body scroll during AJAX */
-body.loading {
-    overflow-x: hidden;
-}
-
-/* Loading indicator (optional) */
-.table-loading {
-    position: relative;
-}
-
-.table-loading::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(255, 255, 255, 0.8);
-    z-index: 10;
 }

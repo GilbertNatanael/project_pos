@@ -14,6 +14,7 @@
                     <li><a href="{{ route('barang') }}" class="{{ request()->is('master/barang') ? 'active' : '' }}">📦 Barang</a></li>
                     @if(session('role') === 'owner')
                     <li><a href="{{ route('karyawan') }}" class="{{ request()->is('master/karyawan') ? 'active' : '' }}">👤 Karyawan</a></li>
+                    <li><a href="{{ route('kategori') }}" class="{{ request()->is('master/kategori') ? 'active' : '' }}">📦 Kategori</a></li>
                     @endif
                 </ul>
             </li>

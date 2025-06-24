@@ -11,8 +11,8 @@ use App\Http\Controllers\PembelianController;
 use App\Http\Controllers\SalesForecastController;
 use App\Http\Controllers\LaporanController;
 use App\Http\Controllers\DetailPrediksiController;
-
-
+use App\Http\Controllers\KategoriController;
+use App\Models\Kategori;
 Route::get('/', fn () => redirect()->route('login'));
 
 // Dashboard
@@ -31,6 +31,9 @@ Route::resource('barang', BarangController::class)->except(['index']);
 Route::get('/master/karyawan', [KaryawanController::class, 'index'])->name('karyawan');
 Route::resource('karyawan', KaryawanController::class)->except(['index']);
 
+Route::get('/master/kategori', [KategoriController::class, 'index'])->name('kategori');
+Route::resource('kategori', KategoriController::class)->except(['index']);
+
 // Transaksi
 Route::get('/transaksi', [BarangController::class, 'transaksi'])->name('transaksi');
 Route::post('/transaksi/store', [TransaksiController::class, 'store'])->name('transaksi.store');
@@ -46,9 +49,15 @@ Route::get('/laporan/export/pdf', [TransaksiController::class, 'exportPdf'])->na
 Route::get('/history', [HistoryController::class, 'index'])->name('history');
 
 // Create Views (Form Tambah)
-Route::get('/master/create/create_barang', fn () => view('master.create.create_barang'))->name('create_barang');
-Route::get('/master/create/create_karyawan', fn () => view('master.create.create_karyawan'))->name('create_karyawan');
 
+
+Route::get('/master/create/create_barang', function () {
+    $kategori = Kategori::orderBy('nama_kategori')->get();
+    return view('master.create.create_barang', compact('kategori'));
+})->name('create_barang');
+
+Route::get('/master/create/create_karyawan', fn () => view('master.create.create_karyawan'))->name('create_karyawan');
+Route::get('/master/create/create_kategori', fn () => view('master.create.create_kategori'))->name('create_kategori');
 // Pembelian - Menampilkan daftar pembelian
 Route::get('/pembelian', [PembelianController::class, 'index'])->name('pembelian');
 // Tambah Pembelian - View ambil data dari BarangController

@@ -15,6 +15,8 @@ class Barang extends Model
         'harga_barang',
         'jumlah_barang',
         'satuan_barang',
+        'merek',
+        'kategori_id'
     ];
 
     public $timestamps = true; // default-nya true, bisa dihilangkan kalau pakai timestamps
@@ -23,4 +25,9 @@ class Barang extends Model
     {
         return $this->hasMany(History::class, 'id_barang', 'id_barang');
     }
+    public function kategori()
+{
+    return $this->belongsTo(Kategori::class, 'kategori_id');
+}
+
 }
