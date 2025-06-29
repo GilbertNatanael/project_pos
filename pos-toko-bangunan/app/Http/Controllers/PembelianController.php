@@ -6,31 +6,64 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Pembelian;
 use App\Models\DetailPembelian;
+use App\Models\Kategori;
 use Carbon\Carbon;
 
 class PembelianController extends Controller
 {
     public function index(Request $request)
     {
-        // Dapatkan data dengan pagination
-        $pembelian = Pembelian::with('detailPembelian')
-            ->orderByDesc('tanggal')
-            ->paginate(10);
+        $query = Pembelian::with('detailPembelian.barang.kategori')
+            ->orderByDesc('tanggal');
+
+        // Filter berdasarkan nama barang
+        if ($request->filled('nama_barang')) {
+            $query->whereHas('detailPembelian', function ($q) use ($request) {
+                $q->where('nama_barang', 'like', '%' . $request->nama_barang . '%');
+            });
+        }
+
+        // Filter berdasarkan kategori
+        if ($request->filled('kategori_id')) {
+            $query->whereHas('detailPembelian.barang', function ($q) use ($request) {
+                $q->where('kategori_id', $request->kategori_id);
+            });
+        }
+
+        // Filter berdasarkan tanggal
+        if ($request->filled('tanggal_dari')) {
+            $query->whereDate('tanggal', '>=', $request->tanggal_dari);
+        }
+
+        if ($request->filled('tanggal_sampai')) {
+            $query->whereDate('tanggal', '<=', $request->tanggal_sampai);
+        }
+
+        $pembelian = $query->paginate(10)->appends($request->all());
+
+        // Dapatkan data kategori untuk dropdown filter
+        $kategoris = Kategori::all();
 
         // Jika request AJAX, kembalikan view yang sama (untuk pagination AJAX)
         if ($request->ajax()) {
-            return view('pembelian.pembelian', compact('pembelian'))->render();
+            return view('pembelian.pembelian', compact('pembelian', 'kategoris'))->render();
         }
 
         // Untuk request normal, return view biasa
-        return view('pembelian.pembelian', compact('pembelian'));
+        return view('pembelian.pembelian', compact('pembelian', 'kategoris'));
     }
 
-    public function tambah()
-    {
-        $barang = DB::table('barang')->get();
-        return view('pembelian.tambah_pembelian', compact('barang'));
-    }
+        public function tambah()
+        {
+            $barang = DB::table('barang')
+                ->leftJoin('kategori', 'barang.kategori_id', '=', 'kategori.id')
+                ->select('barang.*', 'kategori.nama_kategori')
+                ->get();
+            
+            $kategoris = Kategori::all();
+            
+            return view('pembelian.tambah_pembelian', compact('barang', 'kategoris'));
+        }
 
     public function simpan(Request $request)
     {
@@ -40,7 +73,7 @@ class PembelianController extends Controller
             'items.*.nama' => 'required|string',
             'items.*.qty' => 'required|integer|min:1',
             'items.*.harga' => 'required|numeric|min:0',
-            'items.*.satuan' => 'required|string', // Tambahan validasi satuan
+            'items.*.satuan' => 'required|string',
             'total' => 'required|numeric|min:0'
         ]);
 
@@ -58,7 +91,7 @@ class PembelianController extends Controller
                     'id_barang' => $item['id'],
                     'nama_barang' => $item['nama'],
                     'jumlah' => $item['qty'],
-                    'satuan' => $item['satuan'], // Tambahan field satuan
+                    'satuan' => $item['satuan'],
                     'subtotal' => $item['qty'] * $item['harga'],
                 ]);
 
@@ -75,20 +108,17 @@ class PembelianController extends Controller
 
     public function detail($id)
     {
-        // Join dengan tabel barang untuk mendapatkan satuan
-        $details = DB::table('detail_pembelian')
-            ->leftJoin('barang', 'detail_pembelian.id_barang', '=', 'barang.id_barang')
-            ->select(
-                'detail_pembelian.*',
-                'barang.satuan_barang'
-            )
-            ->where('detail_pembelian.id_pembelian', $id)
+        // Ambil detail pembelian dengan join ke barang dan kategori
+        $details = DetailPembelian::with(['barang.kategori'])
+            ->where('id_pembelian', $id)
             ->get()
             ->map(function ($detail) {
                 return [
                     'nama_barang' => $detail->nama_barang,
                     'jumlah' => $detail->jumlah,
-                    'satuan' => $detail->satuan ?? $detail->satuan_barang ?? 'pcs', // Prioritas: satuan dari detail_pembelian, lalu dari barang, default 'pcs'
+                    'satuan' => $detail->satuan ?? $detail->barang->satuan_barang ?? 'pcs',
+                    'merek' => $detail->barang->merek ?? '-',
+                    'kategori' => $detail->barang->kategori->nama_kategori ?? '-',
                     'subtotal' => $detail->subtotal
                 ];
             });

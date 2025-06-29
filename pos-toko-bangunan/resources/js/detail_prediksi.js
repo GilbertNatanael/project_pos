@@ -1,4 +1,4 @@
-// Detail Prediksi JavaScript
+// Detail Prediksi JavaScript - Versi Bulanan (Tanpa Akurasi)
 class DetailPrediksi {
     constructor() {
         this.charts = [];
@@ -28,9 +28,10 @@ class DetailPrediksi {
         this.chartData.forEach((item, index) => {
             const ctx = document.getElementById(`chart-${index}`).getContext('2d');
             
+            // Format label untuk bulan
             const labels = item.prediksi_data.map(d => {
                 const date = new Date(d.tanggal);
-                return date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+                return date.toLocaleDateString('id-ID', { month: 'short', year: 'numeric' });
             });
             
             const prediksiValues = item.prediksi_data.map(d => parseFloat(d.jumlah));
@@ -63,7 +64,7 @@ class DetailPrediksi {
                     plugins: {
                         title: {
                             display: true,
-                            text: `Prediksi vs Aktual - ${item.nama_item}`
+                            text: `Prediksi vs Aktual - ${item.nama_item} (Bulanan)`
                         },
                         legend: {
                             display: true,
@@ -86,7 +87,7 @@ class DetailPrediksi {
                             beginAtZero: true,
                             title: {
                                 display: true,
-                                text: `Jumlah (${item.satuan_barang || 'unit'})`
+                                text: `Jumlah per Bulan (${item.satuan_barang || 'unit'})`
                             },
                             ticks: {
                                 callback: (value) => {
@@ -97,7 +98,7 @@ class DetailPrediksi {
                         x: {
                             title: {
                                 display: true,
-                                text: 'Tanggal'
+                                text: 'Bulan'
                             }
                         }
                     },
@@ -117,19 +118,33 @@ class DetailPrediksi {
         });
     }
 
-    // Create data table for comparison
+    // Create data table for comparison (TANPA AKURASI)
     createDataTable(item, index) {
         const container = document.getElementById(`data-table-${index}`);
         const satuan = item.satuan_barang || 'unit';
-        let tableHTML = `<table class="table table-sm table-bordered">
-            <thead>
-                <tr>
-                    <th>Tanggal</th>
-                    <th>Prediksi (${satuan})</th>
-                    <th>Aktual (${satuan})</th>
-                    <th>Selisih (${satuan})</th>
-            </thead>
-            <tbody>`;
+
+        
+        let reorderInfoHTML = `
+        <div class="mb-2 p-2 bg-light rounded">
+            <small>
+                <strong>Reorder Point:</strong> ${item.reorder_point} ${satuan}<br>
+                <strong>Order Quantity:</strong> ${item.order_quantity} ${satuan}<br>
+                <strong>Lead Time Stock:</strong> ${item.lead_time_stock} ${satuan}<br>
+                <strong>Safety Stock:</strong> ${item.safety_stock} ${satuan}
+            </small>
+        </div>
+    `;
+    
+    let tableHTML = reorderInfoHTML + `<table class="table table-sm table-bordered">
+        <thead>
+            <tr>
+                <th>Bulan</th>
+                <th>Prediksi (${satuan})</th>
+                <th>Aktual (${satuan})</th>
+                <th>Selisih (${satuan})</th>
+            </tr>
+        </thead>
+        <tbody>`;
         
         item.prediksi_data.forEach((pred, i) => {
             const aktual = item.aktual_data[i];
@@ -146,9 +161,15 @@ class DetailPrediksi {
                 selisihClass = 'text-info';
             }
             
+            // Format bulan untuk tampilan
+            const bulanText = new Date(pred.tanggal).toLocaleDateString('id-ID', { 
+                month: 'short', 
+                year: 'numeric' 
+            });
+            
             tableHTML += `
                 <tr>
-                    <td><small>${new Date(pred.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}</small></td>
+                    <td><small>${bulanText}</small></td>
                     <td><small>${prediksiFormatted}</small></td>
                     <td><small class="${statusClass}">${aktualText}</small></td>
                     <td><small class="${selisihClass}">${selisihText}</small></td>
@@ -160,7 +181,7 @@ class DetailPrediksi {
         container.innerHTML = tableHTML;
     }
 
-    // Calculate and display data summary with differences
+    // Calculate and display data summary (TANPA AKURASI)
     calculateDataSummary(chartData) {
         let totalPrediksi = 0;
         let totalAktual = 0;
@@ -178,7 +199,9 @@ class DetailPrediksi {
                     
                     totalPrediksi += predValue;
                     totalAktual += aktualValue;
-                    totalSelisih += Math.abs(predValue - aktualValue);
+                    
+                    const selisih = Math.abs(predValue - aktualValue);
+                    totalSelisih += selisih;
                 }
             });
         });
@@ -190,7 +213,7 @@ class DetailPrediksi {
             <div class="row text-center">
                 <div class="col-4">
                     <h4 class="text-primary">${availableDataPoints}</h4>
-                    <small class="text-muted">Data Tersedia</small>
+                    <small class="text-muted">Bulan Tersedia</small>
                 </div>
                 <div class="col-4">
                     <h4 class="text-info">${rataRataSelisih}</h4>
@@ -204,13 +227,14 @@ class DetailPrediksi {
             <hr>
             <div class="text-center">
                 <small class="text-muted">
-                    Selisih dihitung dari |Prediksi - Aktual|
+                    Data prediksi dan aktual dihitung per bulan. Selisih = |Prediksi - Aktual|
                 </small>
             </div>
         `;
         
         document.getElementById('accuracy-summary').innerHTML = summaryHTML;
     }
+    
     destroyCharts() {
         this.charts.forEach(chart => {
             if (chart) {

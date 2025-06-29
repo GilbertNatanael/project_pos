@@ -105,8 +105,7 @@ document.addEventListener('DOMContentLoaded', function () {
             updatePagination();
         }
     }
-
-    // Filter and search functionality
+// Filter and search functionality
     function applyFilters() {
         const searchKeyword = document.getElementById('searchInput').value.toLowerCase();
         const selectedCategory = document.getElementById('filterKategori').value.toLowerCase();
@@ -114,9 +113,12 @@ document.addEventListener('DOMContentLoaded', function () {
         filteredRows = allRows.filter(row => {
             const namaBarang = row.dataset.nama.toLowerCase();
             const kodeBarang = row.children[0].textContent.toLowerCase();
+            const merekBarang = (row.dataset.merek || '').toLowerCase();
             const kategoriBarang = row.dataset.kategori || '';
 
-            const matchesSearch = namaBarang.includes(searchKeyword) || kodeBarang.includes(searchKeyword);
+            const matchesSearch = namaBarang.includes(searchKeyword) || 
+                                kodeBarang.includes(searchKeyword) || 
+                                merekBarang.includes(searchKeyword);
             const matchesCategory = !selectedCategory || kategoriBarang === selectedCategory;
 
             return matchesSearch && matchesCategory;
@@ -159,12 +161,13 @@ document.addEventListener('DOMContentLoaded', function () {
             const nama = row.dataset.nama;
             const harga = parseInt(row.dataset.harga);
             const satuan = row.dataset.satuan;
+            const merek = row.dataset.merek || '-';
 
             let existing = keranjang.find(item => item.id === id);
             if (existing) {
                 existing.qty += 1;
             } else {
-                keranjang.push({ id, nama, harga: 0, satuan, qty: 1 });
+                keranjang.push({ id, nama, harga: 0, satuan, merek, qty: 1 });
             }
 
             renderKeranjang();
@@ -184,7 +187,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td>${item.nama}</td>
+                <td>
+                    <div class="fw-bold">${item.nama}</div>
+                    <small class="text-muted">${item.merek || '-'}</small>
+                </td>
                 <td><input type="number" class="form-control form-control-sm qty-input" data-index="${index}" value="${item.qty}" min="1" style="width: 70px;"></td>
                 <td>${item.satuan}</td>
                 <td><input type="number" class="form-control harga-input" data-index="${index}" value="${item.harga}" min="0" style="width: 120px;"></td>

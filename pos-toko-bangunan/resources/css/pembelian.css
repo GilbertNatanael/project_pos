@@ -71,9 +71,9 @@
 .modal-container {
     position: relative;
     z-index: 10001;
-    max-width: 90vw;
+    max-width: 95vw; /* Diperbesar dari 90vw */
     max-height: 90vh;
-    width: 600px;
+    width: 900px; /* Diperbesar dari 600px */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -130,7 +130,7 @@
 
 .modal-body {
     padding: 24px;
-    max-height: 400px;
+    max-height: 500px; /* Diperbesar dari 400px */
     overflow-y: auto;
 }
 
@@ -138,24 +138,19 @@
     width: 100%;
     border-collapse: collapse;
     font-size: 14px;
+    table-layout: fixed; /* Memungkinkan kontrol lebar kolom */
 }
 
 .detail-table thead {
     background-color: #f9fafb;
 }
 
-.detail-table th {
-    padding: 12px 16px;
-    text-align: left;
-    font-weight: 600;
-    color: #ffffff;
-    border-bottom: 2px solid #e5e7eb;
-}
-
+.detail-table th,
 .detail-table td {
-    padding: 12px 16px;
-    border-bottom: 1px solid #f3f4f6;
-    color: #6b7280;
+    padding: 12px 8px; /* Padding horizontal dikurangi */
+    text-align: left;
+    word-wrap: break-word; /* Memecah kata panjang */
+    overflow-wrap: break-word;
 }
 
 .detail-table tbody tr:hover {
@@ -231,4 +226,241 @@ body.modal-open {
 .pagination .active {
     background-color: #2563eb;
     color: white;
+}
+/* Pengaturan lebar kolom yang lebih baik */
+.detail-table th:nth-child(1),
+.detail-table td:nth-child(1) {
+    width: 25%; /* Nama Barang - lebar cukup */
+}
+
+.detail-table th:nth-child(2),
+.detail-table td:nth-child(2) {
+    width: 15%; /* Merek */
+}
+
+.detail-table th:nth-child(3),
+.detail-table td:nth-child(3) {
+    width: 15%; /* Kategori */
+}
+
+.detail-table th:nth-child(4),
+.detail-table td:nth-child(4) {
+    width: 10%; /* Jumlah */
+    text-align: center;
+}
+
+.detail-table th:nth-child(5),
+.detail-table td:nth-child(5) {
+    width: 10%; /* Satuan */
+    text-align: center;
+}
+
+.detail-table th:nth-child(6),
+.detail-table td:nth-child(6) {
+    width: 25%; /* Subtotal */
+    text-align: right;
+}
+
+/* Responsive untuk mobile */
+@media (max-width: 768px) {
+    .modal-container {
+        width: 95vw;
+        max-width: 95vw;
+    }
+    
+    .detail-table {
+        font-size: 12px;
+    }
+    
+    .detail-table th,
+    .detail-table td {
+        padding: 8px 4px;
+    }
+}
+
+/* Perbaikan untuk Filter Form - 2x2 Grid Layout */
+.filter-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+@media (min-width: 640px) {
+    .filter-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+    }
+}
+
+/* Button group untuk filter */
+.filter-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.75rem;
+}
+
+.filter-buttons button {
+    min-width: 80px;
+    padding: 8px 16px;
+}
+/* Form Group Tanggal Sampai (inline layout) */
+.tanggal-sampai-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.label-inline {
+    min-width: 110px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.tanggal-sampai-input-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    flex: 1;
+}
+
+.tanggal-input {
+    flex: 1;
+    min-width: 160px;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.tanggal-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.btn-filter,
+.btn-reset {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 500;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    white-space: nowrap;
+}
+
+.btn-filter {
+    background-color: #2563eb;
+}
+
+.btn-filter:hover {
+    background-color: #1d4ed8;
+}
+
+.btn-reset {
+    background-color: #6b7280;
+}
+
+.btn-reset:hover {
+    background-color: #4b5563;
+}
+/* Filter Form Styles */
+.filter-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+@media (min-width: 640px) {
+    .filter-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .filter-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* Filter Button Group */
+.filter-buttons {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.btn-filter,
+.btn-reset {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    min-width: 100px;
+    justify-content: center;
+}
+
+.btn-filter {
+    background-color: #2563eb;
+    color: white;
+}
+
+.btn-filter:hover {
+    background-color: #1d4ed8;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3);
+}
+
+.btn-reset {
+    background-color: #6b7280;
+    color: white;
+}
+
+.btn-reset:hover {
+    background-color: #4b5563;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(107, 114, 128, 0.3);
+}
+
+.btn-filter:focus,
+.btn-reset:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+/* Input Focus States */
+.filter-grid input:focus,
+.filter-grid select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Label Styling */
+.filter-grid label {
+    color: #374151;
+    font-weight: 500;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+    .filter-buttons {
+        width: 100%;
+    }
+    
+    .btn-filter,
+    .btn-reset {
+        flex: 1;
+        min-width: auto;
+    }
 }

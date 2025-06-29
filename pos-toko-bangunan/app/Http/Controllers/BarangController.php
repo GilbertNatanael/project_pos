@@ -156,9 +156,16 @@ private function logHistory($id_barang, $aksi)
 }
 
 
-    public function tambahPembelian()
-    {
-        $barang = Barang::orderBy('nama_barang')->get();
-        return view('pembelian.tambah', compact('barang'));
-    }
+public function tambahPembelian()
+{
+    $barang = Barang::with('kategori')
+        ->leftJoin('kategori', 'barang.kategori_id', '=', 'kategori.id')
+        ->select('barang.*', 'kategori.nama_kategori')
+        ->orderBy('nama_barang')
+        ->get();
+    
+    $kategoris = Kategori::orderBy('nama_kategori')->get();
+    
+    return view('pembelian.tambah', compact('barang', 'kategoris'));
+}
 }

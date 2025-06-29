@@ -37,8 +37,8 @@
                             <td>{{ $prediksi->jumlah_item }} item</td>
                         </tr>
                         <tr>
-                            <td><strong>Periode:</strong></td>
-                            <td>{{ $prediksi->tanggal_dari->format('d F Y') }} s.d {{ $prediksi->tanggal_sampai->format('d F Y') }}</td>
+                            <td><strong>Periode Prediksi:</strong></td>
+                            <td>{{ $prediksi->tanggal_dari->format('F Y') }} s.d {{ $prediksi->tanggal_sampai->format('F Y') }}</td>
                         </tr>
                     </table>
                 </div>
@@ -47,7 +47,7 @@
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header bg-success text-white">
-                    <h5 class="mb-0"><i class="bi bi-graph-up"></i> Data Saat ini</h5>
+                    <h5 class="mb-0"><i class="bi bi-graph-up"></i> Ringkasan Data</h5>
                 </div>
                 <div class="card-body">
                     <div id="accuracy-summary">
@@ -55,71 +55,80 @@
                             <div class="spinner-border text-primary" role="status">
                                 <span class="visually-hidden">Loading...</span>
                             </div>
-                            <div class="mt-2">Menghitung akurasi...</div>
+                            <div class="mt-2">Menghitung ringkasan...</div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
     {{-- Detail Item Prediksi --}}
-    <div class="card mb-4">
-        <div class="card-header bg-info text-white">
-            <h5 class="mb-0"><i class="bi bi-list-ul"></i> Detail Item Prediksi</h5>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>No</th>
-                            <th>Nama Item</th>
-                            <th>Stok Tersisa</th>
-                            <th>Sisa Hari</th>
-                            <th>Prediksi Habis</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($detailPrediksi as $index => $detail)
-                        <tr>
-                            <td>{{ $index + 1 }}</td>
-                            <td>{{ $detail->nama_item }}</td>
-                            <td>{{ $detail->stok_tersisa_formatted ?? $detail->stok_tersisa }} {{ $detail->satuan_barang ?? 'unit' }}</td>
-                            <td>{{ $detail->sisa_hari }} hari</td>
-                            <td>
-                                @if($detail->tanggal_habis)
-                                    {{ $detail->tanggal_habis->format('d F Y') }}
-                                @else
-                                    <span class="text-muted">Tidak habis dalam periode</span>
-                                @endif
-                            </td>
-                            <td>
-                                @if($detail->tanggal_habis)
-                                    @if($detail->tanggal_habis->isPast())
-                                        <span class="badge bg-danger">Sudah Lewat</span>
-                                    @elseif($detail->tanggal_habis->isToday())
-                                        <span class="badge bg-warning">Hari Ini</span>
-                                    @else
-                                        <span class="badge bg-success">Akan Datang</span>
-                                    @endif
-                                @else
-                                    <span class="badge bg-info">Stok Aman</span>
-                                @endif
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
+<div class="card mb-4">
+    <div class="card-header bg-info text-white">
+        <h5 class="mb-0"><i class="bi bi-list-ul"></i> Detail Item Prediksi</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>Nama Item</th>
+                    <th>Stok Tersisa</th>
+                    <th>Reorder Point</th>
+                    <th>Order Quantity</th>
+                    <th>Prediksi Habis</th>
+                    <th>Status</th>
+                    <th>Status Reorder</th>
+                </tr>
+            </thead>
+                <tbody>
+                @foreach($detailPrediksi as $index => $detail)
+                <tr>
+                    <td>{{ $index + 1 }}</td>
+                    <td>{{ $detail->nama_item }}</td>
+                    <td>{{ $detail->stok_tersisa_formatted ?? $detail->stok_tersisa }} {{ $detail->satuan_barang ?? 'unit' }}</td>
+                    <td>{{ $detail->reorder_point }} {{ $detail->satuan_barang ?? 'unit' }}</td>
+                    <td>{{ $detail->order_quantity }} {{ $detail->satuan_barang ?? 'unit' }}</td>
+                    <td>
+                        @if($detail->tanggal_habis)
+                            {{ $detail->tanggal_habis->format('F Y') }}
+                        @else
+                            <span class="text-muted">Tidak habis dalam periode</span>
+                        @endif
+                    </td>
+                    <td>
+                        @if($detail->tanggal_habis)
+                            @if($detail->tanggal_habis->isPast())
+                                <span class="badge bg-danger">Sudah Lewat</span>
+                            @elseif($detail->tanggal_habis->format('Y-m') == now()->format('Y-m'))
+                                <span class="badge bg-warning">Bulan Ini</span>
+                            @else
+                                <span class="badge bg-success">Akan Datang</span>
+                            @endif
+                        @else
+                            <span class="badge bg-info">Stok Aman</span>
+                        @endif
+                    </td>
+                    <td>
+                        @if($detail->reorder_status == 'perlu_pesan')
+                            <span class="badge bg-danger">Perlu Pesan</span>
+                        @else
+                            <span class="badge bg-success">Stok Aman</span>
+                        @endif
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+            </table>
         </div>
     </div>
+</div>
 
     {{-- Grafik Perbandingan --}}
     <div class="card">
         <div class="card-header bg-warning text-dark">
-            <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Grafik Perbandingan Data Prediksi vs Aktual</h5>
+            <h5 class="mb-0"><i class="bi bi-bar-chart"></i> Grafik Perbandingan Data Prediksi vs Aktual (Bulanan)</h5>
         </div>
         <div class="card-body">
             <div class="row">
@@ -127,8 +136,8 @@
                     <div class="alert alert-info">
                         <i class="bi bi-info-circle"></i>
                         <strong>Keterangan:</strong> 
-                        Grafik ini menunjukkan perbandingan antara prediksi konsumsi dengan data aktual transaksi. 
-                        Data aktual akan muncul sesuai dengan tanggal transaksi yang tersedia.
+                        Grafik ini menunjukkan perbandingan antara prediksi konsumsi bulanan dengan data aktual transaksi per bulan. 
+                        Data aktual dihitung dari total transaksi dalam bulan yang sama. Analisis fokus pada selisih antara prediksi dan aktual.
                     </div>
                 </div>
             </div>
@@ -148,10 +157,9 @@
                             <div class="card-body">
                                 <small>
                                     <strong>Stok Tersisa:</strong> {{ $item['stok_tersisa'] }} {{ $item['satuan_barang'] ?? 'unit' }}<br>
-                                    <strong>Sisa Hari:</strong> {{ $item['sisa_hari'] }} hari<br>
                                     <strong>Prediksi Habis:</strong> 
                                     @if($item['tanggal_habis'])
-                                        {{ \Carbon\Carbon::parse($item['tanggal_habis'])->format('d M Y') }}
+                                        {{ \Carbon\Carbon::parse($item['tanggal_habis'])->format('F Y') }}
                                     @else
                                         <span class="text-muted">Tidak habis</span>
                                     @endif

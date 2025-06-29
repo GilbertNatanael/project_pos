@@ -22,6 +22,77 @@
         </div>
     </div>
 
+<!-- Filter Section -->
+<div class="bg-white shadow rounded mb-4 p-4">
+    <h3 class="text-lg font-semibold mb-3">Filter Pembelian</h3>
+    <form id="filterForm" method="GET" action="{{ route('pembelian') }}">
+        <div class="filter-grid">
+            <!-- Filter Nama Barang -->
+            <div>
+                <label for="nama_barang" class="block text-sm font-medium text-gray-700 mb-1">Nama Barang</label>
+                <input type="text" 
+                       id="nama_barang" 
+                       name="nama_barang" 
+                       value="{{ request('nama_barang') }}"
+                       placeholder="Cari nama barang..."
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <!-- Filter Kategori -->
+            <div>
+                <label for="kategori_id" class="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
+                <select id="kategori_id" 
+                        name="kategori_id"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">Semua Kategori</option>
+                    @foreach($kategoris as $kategori)
+                        <option value="{{ $kategori->id }}" 
+                                {{ request('kategori_id') == $kategori->id ? 'selected' : '' }}>
+                            {{ $kategori->nama_kategori }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <!-- Filter Tanggal Dari -->
+            <div>
+                <label for="tanggal_dari" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Dari</label>
+                <input type="date" 
+                       id="tanggal_dari" 
+                       name="tanggal_dari" 
+                       value="{{ request('tanggal_dari') }}"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+
+            <!-- Filter Tanggal Sampai -->
+            <div>
+                <label for="tanggal_sampai" class="block text-sm font-medium text-gray-700 mb-1">Tanggal Sampai</label>
+                <input type="date" 
+                       id="tanggal_sampai" 
+                       name="tanggal_sampai" 
+                       value="{{ request('tanggal_sampai') }}"
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+        </div>
+
+        <!-- Button Group -->
+        <div class="filter-buttons mt-4">
+            <button type="submit" class="btn-filter">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-4 h-4 mr-2">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
+                </svg>
+                Filter
+            </button>
+            <button type="button" id="resetFilter" class="btn-reset">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-4 h-4 mr-2">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Reset
+            </button>
+        </div>
+    </form>
+</div>
+
     <!-- Tabel Riwayat Pembelian -->
     <div class="bg-white shadow rounded overflow-x-auto">
         <table class="min-w-full divide-y divide-gray-200">
@@ -97,6 +168,8 @@
                     <thead>
                         <tr>
                             <th>Barang</th>
+                            <th>Merek</th>
+                            <th>Kategori</th>
                             <th>Jumlah</th>
                             <th>Satuan</th>
                             <th>Subtotal</th>

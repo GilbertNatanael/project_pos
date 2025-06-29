@@ -25,11 +25,11 @@
         {{-- Periode Prediksi --}}
         <div class="col-md-3">
             <label for="periode-start" class="form-label">Periode Prediksi (Dari)</label>
-            <input type="date" id="periode-start" class="form-control">
+            <input type="month" id="periode-start" class="form-control">
         </div>
         <div class="col-md-3">
             <label for="periode-end" class="form-label">Periode Prediksi (Sampai)</label>
-            <input type="date" id="periode-end" class="form-control">
+            <input type="month" id="periode-end" class="form-control">
         </div>
 
         {{-- Pencarian --}}

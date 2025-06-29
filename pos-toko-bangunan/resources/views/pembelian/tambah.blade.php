@@ -20,8 +20,9 @@
                         <input type="text" class="form-control" id="searchInput" placeholder="Cari barang...">
                         <select class="form-select" id="filterKategori">
                             <option value="">Semua Kategori</option>
-                            <option value="bangunan">Bangunan</option>
-                            <option value="makanan">Makanan</option>
+                            @foreach($kategoris as $kategori)
+                                <option value="{{ strtolower($kategori->nama_kategori) }}">{{ $kategori->nama_kategori }}</option>
+                            @endforeach
                         </select>
                         <select class="form-select" id="itemsPerPage" style="width: 120px;">
                             <option value="5">5 per halaman</option>
@@ -36,6 +37,8 @@
                                 <tr>
                                     <th>Kode</th>
                                     <th>Nama</th>
+                                    <th>Merek</th>
+                                    <th>Kategori</th>
                                     <th>Stok</th>
                                     <th>Satuan</th>
                                     <th>Harga</th>
@@ -48,9 +51,12 @@
                                         data-nama="{{ $b->nama_barang }}" 
                                         data-harga="{{ $b->harga_barang }}" 
                                         data-satuan="{{ $b->satuan_barang }}"
-                                        data-kategori="{{ strtolower($b->kategori_barang ?? '') }}">
+                                        data-kategori="{{ strtolower($b->nama_kategori ?? '') }}"
+                                        data-merek="{{ $b->merek ?? '-' }}">
                                         <td>{{ $b->kode_barang }}</td>
                                         <td>{{ $b->nama_barang }}</td>
+                                        <td>{{ $b->merek ?? '-' }}</td>
+                                        <td>{{ $b->nama_kategori ?? '-' }}</td>
                                         <td>{{ $b->jumlah_barang }}</td>
                                         <td>{{ $b->satuan_barang }}</td>
                                         <td>Rp {{ number_format($b->harga_barang, 0, ',', '.') }}</td>

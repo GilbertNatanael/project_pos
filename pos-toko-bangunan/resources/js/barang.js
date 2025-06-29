@@ -52,6 +52,10 @@ function attachEditListeners() {
                                 <option value="liter" ${satuan === 'liter' ? 'selected' : ''}>liter</option>
                                 <option value="meter" ${satuan === 'meter' ? 'selected' : ''}>meter</option>
                                 <option value="lusin" ${satuan === 'lusin' ? 'selected' : ''}>lusin</option>
+                                <option value="batang" ${satuan === 'batang' ? 'selected' : ''}>batang</option>
+                                <option value="zak" ${satuan === 'zak' ? 'selected' : ''}>zak</option>
+                                <option value="lembar" ${satuan === 'lembar' ? 'selected' : ''}>lembar</option>
+
                             </select>
                             <input type="number" name="jumlah_barang" value="${jumlah}" placeholder="Jumlah" class="border p-2 rounded" required />
                             <input type="number" name="harga_barang" value="${harga}" placeholder="Harga" class="border p-2 rounded" required />

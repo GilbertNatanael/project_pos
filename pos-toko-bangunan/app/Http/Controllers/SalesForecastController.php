@@ -49,17 +49,12 @@ class SalesForecastController extends Controller
         }
 
         try {
-            $dateFrom = Carbon::parse($request->date_from);
-            $dateTo = Carbon::parse($request->date_to);
-            $daysAhead = $dateFrom->diffInDays($dateTo) + 1;
-
             $client = new Client();
             $response = $client->post($this->flaskApiUrl . '/predict', [
                 'json' => [
                     'item_name' => $request->item_name,
                     'date_from' => $request->date_from,
-                    'date_to' => $request->date_to,
-                    'days_ahead' => $daysAhead
+                    'date_to' => $request->date_to
                 ],
                 'timeout' => 30
             ]);
@@ -70,8 +65,8 @@ class SalesForecastController extends Controller
             $data['date_from'] = $request->date_from;
             $data['date_to'] = $request->date_to;
             
-            // Tambahkan perhitungan kapan barang habis
-            $stockInfo = $this->calculateStockDepletion($request->item_name, $data['predictions']);
+            // Tambahkan perhitungan kapan barang habis (bulanan)
+            $stockInfo = $this->calculateMonthlyStockDepletion($request->item_name, $data['predictions']);
             $data['stock_info'] = $stockInfo;
             
             // Simpan data prediksi ke database
@@ -115,16 +110,11 @@ class SalesForecastController extends Controller
         }
 
         try {
-            $dateFrom = Carbon::parse($request->date_from);
-            $dateTo = Carbon::parse($request->date_to);
-            $daysAhead = $dateFrom->diffInDays($dateTo) + 1;
-
             $client = new Client();
             $response = $client->post($this->flaskApiUrl . '/predict/all', [
                 'json' => [
                     'date_from' => $request->date_from,
-                    'date_to' => $request->date_to,
-                    'days_ahead' => $daysAhead
+                    'date_to' => $request->date_to
                 ],
                 'timeout' => 60
             ]);
@@ -137,11 +127,9 @@ class SalesForecastController extends Controller
                 'date_to' => $request->date_to
             ];
             
-            // Tambahkan perhitungan untuk semua items
-            foreach ($data as $itemName => &$itemData) {
-                if ($itemName === 'period') continue;
-                
-                $stockInfo = $this->calculateStockDepletion($itemName, $itemData['predictions']);
+            // Tambahkan perhitungan untuk semua items (bulanan)
+            foreach ($data['results'] as $itemName => &$itemData) {
+                $stockInfo = $this->calculateMonthlyStockDepletion($itemName, $itemData['predictions']);
                 $itemData['stock_info'] = $stockInfo;
             }
             
@@ -161,76 +149,50 @@ class SalesForecastController extends Controller
 
     /**
      * Cek apakah periode prediksi bertabrakan dengan prediksi sebelumnya
+     * Dimodifikasi untuk menangani periode bulanan
      */
-    private function checkPeriodOverlap($itemName, $dateFrom, $dateTo)
-    {
-        $existingPredictions = DB::table('prediksi as p')
-            ->join('detail_prediksi as dp', 'p.id_prediksi', '=', 'dp.id_prediksi')
-            ->where('dp.nama_item', $itemName)
-            ->where(function ($query) use ($dateFrom, $dateTo) {
-                // Cek apakah ada overlap periode
-                $query->where(function ($q) use ($dateFrom, $dateTo) {
-                    // Case 1: New period starts within existing period
-                    $q->where('p.tanggal_dari', '<=', $dateFrom)
-                      ->where('p.tanggal_sampai', '>=', $dateFrom);
-                })->orWhere(function ($q) use ($dateFrom, $dateTo) {
-                    // Case 2: New period ends within existing period
-                    $q->where('p.tanggal_dari', '<=', $dateTo)
-                      ->where('p.tanggal_sampai', '>=', $dateTo);
-                })->orWhere(function ($q) use ($dateFrom, $dateTo) {
-                    // Case 3: New period encompasses existing period
-                    $q->where('p.tanggal_dari', '>=', $dateFrom)
-                      ->where('p.tanggal_sampai', '<=', $dateTo);
-                })->orWhere(function ($q) use ($dateFrom, $dateTo) {
-                    // Case 4: Existing period encompasses new period
-                    $q->where('p.tanggal_dari', '<=', $dateFrom)
-                      ->where('p.tanggal_sampai', '>=', $dateTo);
-                });
-            })
-            ->select('p.tanggal_dari', 'p.tanggal_sampai', 'p.tanggal', 'dp.nama_item')
-            ->get();
+private function checkPeriodOverlap($itemName, $dateFrom, $dateTo)
+{
+    // Konversi ke format bulan untuk perbandingan
+    $startMonth = Carbon::parse($dateFrom)->format('Y-m');
+    $endMonth = Carbon::parse($dateTo)->format('Y-m');
 
-        if ($existingPredictions->count() > 0) {
-            $details = $existingPredictions->map(function ($prediction) {
-                return [
-                    'item' => $prediction->nama_item,
-                    'existing_period' => [
-                        'from' => $prediction->tanggal_dari,
-                        'to' => $prediction->tanggal_sampai
-                    ],
-                    'prediction_date' => $prediction->tanggal
-                ];
-            })->toArray();
+    $existingPredictions = DB::table('prediksi as p')
+        ->join('detail_prediksi as dp', 'p.id_prediksi', '=', 'dp.id_prediksi')
+        ->where('dp.nama_item', $itemName)
+        ->where(function ($query) use ($startMonth, $endMonth) {
+            $query->where(function ($q) use ($startMonth, $endMonth) {
+                // Overlap check berdasarkan bulan - GANTI BAGIAN INI
+                $q->whereRaw("TO_CHAR(p.tanggal_dari, 'YYYY-MM') <= ?", [$endMonth])
+                  ->whereRaw("TO_CHAR(p.tanggal_sampai, 'YYYY-MM') >= ?", [$startMonth]);
+            });
+        })
+        ->select('p.tanggal_dari', 'p.tanggal_sampai', 'p.tanggal', 'dp.nama_item')
+        ->get();
 
+    if ($existingPredictions->count() > 0) {
+        $details = $existingPredictions->map(function ($prediction) {
             return [
-                'has_overlap' => true,
-                'details' => $details
+                'item' => $prediction->nama_item,
+                'existing_period' => [
+                    'from' => Carbon::parse($prediction->tanggal_dari)->format('Y-m'),
+                    'to' => Carbon::parse($prediction->tanggal_sampai)->format('Y-m')
+                ],
+                'prediction_date' => $prediction->tanggal
             ];
-        }
+        })->toArray();
 
         return [
-            'has_overlap' => false,
-            'details' => []
+            'has_overlap' => true,
+            'details' => $details
         ];
     }
 
-    /**
-     * Get available dates for a specific item (untuk frontend)
-     */
-    public function getAvailableDates($itemName)
-    {
-        $usedPeriods = DB::table('prediksi as p')
-            ->join('detail_prediksi as dp', 'p.id_prediksi', '=', 'dp.id_prediksi')
-            ->where('dp.nama_item', $itemName)
-            ->select('p.tanggal_dari', 'p.tanggal_sampai')
-            ->orderBy('p.tanggal_dari')
-            ->get();
-
-        return response()->json([
-            'item_name' => $itemName,
-            'used_periods' => $usedPeriods
-        ]);
-    }
+    return [
+        'has_overlap' => false,
+        'details' => []
+    ];
+}
 
     private function saveSinglePrediction($request, $data, $stockInfo)
     {
@@ -247,11 +209,11 @@ class SalesForecastController extends Controller
             'id_prediksi' => $prediksi->id_prediksi,
             'nama_item' => $request->item_name,
             'stok_tersisa' => $stockInfo['current_stock'],
-            'sisa_hari' => $stockInfo['days_until_depletion'],
+            'sisa_hari' => $stockInfo['months_until_depletion'], // Ubah ke bulan
             'tanggal_habis' => $stockInfo['depletion_date'] ? Carbon::parse($stockInfo['depletion_date'])->toDateString() : null
         ]);
 
-        // Simpan data prediksi harian
+        // Simpan data prediksi bulanan
         foreach ($data['predictions'] as $prediction) {
             DataPrediksi::create([
                 'id_detail_prediksi' => $detailPrediksi->id_detail_prediksi,
@@ -267,26 +229,24 @@ class SalesForecastController extends Controller
         // Buat record prediksi utama
         $prediksi = Prediksi::create([
             'tanggal' => Carbon::now()->toDateString(),
-            'jumlah_item' => count($data) - 1, // -1 karena ada key 'period'
+            'jumlah_item' => count($data['results']),
             'tanggal_dari' => $request->date_from,
             'tanggal_sampai' => $request->date_to
         ]);
 
         // Loop untuk setiap item
-        foreach ($data as $itemName => $itemData) {
-            if ($itemName === 'period') continue; // Skip period info
-            
+        foreach ($data['results'] as $itemName => $itemData) {
             // Buat detail prediksi untuk setiap item
             $detailPrediksi = DetailPrediksi::create([
                 'id_prediksi' => $prediksi->id_prediksi,
                 'nama_item' => $itemName,
                 'stok_tersisa' => $itemData['stock_info']['current_stock'],
-                'sisa_hari' => $itemData['stock_info']['days_until_depletion'],
+                'sisa_hari' => $itemData['stock_info']['months_until_depletion'], // Ubah ke bulan
                 'tanggal_habis' => $itemData['stock_info']['depletion_date'] ? 
                     Carbon::parse($itemData['stock_info']['depletion_date'])->toDateString() : null
             ]);
 
-            // Simpan data prediksi harian untuk setiap item
+            // Simpan data prediksi bulanan untuk setiap item
             foreach ($itemData['predictions'] as $prediction) {
                 DataPrediksi::create([
                     'id_detail_prediksi' => $detailPrediksi->id_detail_prediksi,
@@ -298,7 +258,7 @@ class SalesForecastController extends Controller
         }
     }
 
-    private function calculateStockDepletion($itemName, $predictions)
+    private function calculateMonthlyStockDepletion($itemName, $predictions)
     {
         try {
             // Ambil data barang dari database
@@ -308,7 +268,7 @@ class SalesForecastController extends Controller
                 return [
                     'current_stock' => 0,
                     'depletion_date' => null,
-                    'days_until_depletion' => null,
+                    'months_until_depletion' => null,
                     'warning_level' => 'unknown',
                     'message' => 'Data barang tidak ditemukan'
                 ];
@@ -317,9 +277,9 @@ class SalesForecastController extends Controller
             $currentStock = $barang->jumlah_barang;
             $remainingStock = $currentStock;
             $depletionDate = null;
-            $daysUntilDepletion = null;
+            $monthsUntilDepletion = null;
             
-            // Simulasi pengurangan stok berdasarkan prediksi
+            // Simulasi pengurangan stok berdasarkan prediksi bulanan
             foreach ($predictions as $index => $prediction) {
                 $predictedSales = max(0, round($prediction['predicted_quantity']));
                 $remainingStock -= $predictedSales;
@@ -327,70 +287,68 @@ class SalesForecastController extends Controller
                 // Jika stok habis atau kurang dari 0
                 if ($remainingStock <= 0) {
                     $depletionDate = $prediction['date'];
-                    $daysUntilDepletion = $index + 1;
+                    $monthsUntilDepletion = $index + 1;
                     break;
                 }
             }
             
-            // Tentukan level peringatan
-            $warningLevel = $this->getWarningLevel($daysUntilDepletion, $currentStock);
+            // Tentukan level peringatan untuk bulan
+            $warningLevel = $this->getMonthlyWarningLevel($monthsUntilDepletion, $currentStock);
             
             return [
                 'current_stock' => $currentStock,
                 'depletion_date' => $depletionDate,
-                'days_until_depletion' => $daysUntilDepletion,
+                'months_until_depletion' => $monthsUntilDepletion,
                 'warning_level' => $warningLevel,
-                'message' => $this->getDepletionMessage($daysUntilDepletion, $depletionDate)
+                'message' => $this->getMonthlyDepletionMessage($monthsUntilDepletion, $depletionDate)
             ];
             
         } catch (\Exception $e) {
             return [
                 'current_stock' => 0,
                 'depletion_date' => null,
-                'days_until_depletion' => null,
+                'months_until_depletion' => null,
                 'warning_level' => 'error',
                 'message' => 'Error calculating stock depletion: ' . $e->getMessage()
             ];
         }
     }
     
-    private function getWarningLevel($daysUntilDepletion, $currentStock)
+    private function getMonthlyWarningLevel($monthsUntilDepletion, $currentStock)
     {
         if ($currentStock <= 0) {
             return 'out_of_stock';
         }
         
-        if ($daysUntilDepletion === null) {
+        if ($monthsUntilDepletion === null) {
             return 'safe';
         }
         
-        if ($daysUntilDepletion <= 3) {
+        if ($monthsUntilDepletion <= 1) {
             return 'critical';
-        } elseif ($daysUntilDepletion <= 7) {
+        } elseif ($monthsUntilDepletion <= 2) {
             return 'warning';
-        } elseif ($daysUntilDepletion <= 14) {
+        } elseif ($monthsUntilDepletion <= 3) {
             return 'caution';
         } else {
             return 'safe';
         }
     }
     
-    private function getDepletionMessage($daysUntilDepletion, $depletionDate)
+    private function getMonthlyDepletionMessage($monthsUntilDepletion, $depletionDate)
     {
-        if ($daysUntilDepletion === null) {
+        if ($monthsUntilDepletion === null) {
             return 'Stok aman untuk periode prediksi';
         }
         
-        if ($daysUntilDepletion <= 1) {
-            return "⚠️ KRITIS: Stok akan habis besok ($depletionDate)";
-        } elseif ($daysUntilDepletion <= 3) {
-            return "🔴 URGENT: Stok akan habis dalam $daysUntilDepletion hari ($depletionDate)";
-        } elseif ($daysUntilDepletion <= 7) {
-            return "🟡 PERINGATAN: Stok akan habis dalam $daysUntilDepletion hari ($depletionDate)";
-        } elseif ($daysUntilDepletion <= 14) {
-            return "🟠 PERHATIAN: Stok akan habis dalam $daysUntilDepletion hari ($depletionDate)";
+        if ($monthsUntilDepletion <= 1) {
+            return "⚠️ KRITIS: Stok akan habis bulan depan ($depletionDate)";
+        } elseif ($monthsUntilDepletion <= 2) {
+            return "🔴 URGENT: Stok akan habis dalam $monthsUntilDepletion bulan ($depletionDate)";
+        } elseif ($monthsUntilDepletion <= 3) {
+            return "🟡 PERINGATAN: Stok akan habis dalam $monthsUntilDepletion bulan ($depletionDate)";
         } else {
-            return "✅ Stok akan habis dalam $daysUntilDepletion hari ($depletionDate)";
+            return "✅ Stok akan habis dalam $monthsUntilDepletion bulan ($depletionDate)";
         }
     }
 
@@ -404,10 +362,19 @@ class SalesForecastController extends Controller
         return response()->json($prediksi);
     }
 
-    public function getPredictionById($id)
-    {
+public function getPredictionById($id)
+{
+    try {
+        // Hapus prefix 'PRD-' jika ada
+        $cleanId = str_replace('PRD-', '', strtoupper($id));
+        
+        // Validasi bahwa $cleanId adalah numeric
+        if (!is_numeric($cleanId)) {
+            return response()->json(['error' => 'Invalid prediction ID format'], 400);
+        }
+        
         $prediksi = Prediksi::with(['detailPrediksi.dataPrediksi'])
-            ->where('id_prediksi', $id)
+            ->where('id_prediksi', intval($cleanId))
             ->first();
             
         if (!$prediksi) {
@@ -415,10 +382,15 @@ class SalesForecastController extends Controller
         }
         
         return response()->json($prediksi);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => 'Server error: ' . $e->getMessage()
+        ], 500);
     }
+}
 
-
-public function cekPrediksi(Request $request)
+    public function cekPrediksi(Request $request)
 {
     $query = Prediksi::query();
 
@@ -431,13 +403,15 @@ public function cekPrediksi(Request $request)
         $query->whereDate('tanggal', '<=', $request->tanggal_end);
     }
 
-    // Filter berdasarkan periode prediksi
+    // Filter berdasarkan periode prediksi (ubah untuk bulan)
     if ($request->filled('periode_start')) {
-        $query->whereDate('tanggal_dari', '>=', $request->periode_start);
+        $query->where('tanggal_dari', '>=', $request->periode_start . '-01');
     }
 
     if ($request->filled('periode_end')) {
-        $query->whereDate('tanggal_sampai', '<=', $request->periode_end);
+        // Ambil akhir bulan
+        $endDate = Carbon::parse($request->periode_end . '-01')->endOfMonth();
+        $query->where('tanggal_sampai', '<=', $endDate);
     }
 
     // Pencarian berdasarkan id_prediksi
@@ -450,10 +424,88 @@ public function cekPrediksi(Request $request)
 
     $dataPrediksi = $query->orderByDesc('tanggal')->get();
 
+    // Tambahkan format bulan ke response
+    $dataPrediksi = $dataPrediksi->map(function ($item) {
+        return [
+            'id_prediksi' => $item->id_prediksi,
+            'tanggal' => $item->tanggal,
+            'jumlah_item' => $item->jumlah_item,
+            'tanggal_dari' => $item->tanggal_dari,
+            'tanggal_sampai' => $item->tanggal_sampai,
+            'bulan_dari' => $item->tanggal_dari ? Carbon::parse($item->tanggal_dari)->format('Y-m') : null,
+            'bulan_sampai' => $item->tanggal_sampai ? Carbon::parse($item->tanggal_sampai)->format('Y-m') : null,
+        ];
+    });
+
     return response()->json($dataPrediksi);
 }
 
+    /**
+     * Get available dates for a specific item (untuk frontend)
+     * Dimodifikasi untuk menangani periode bulanan
+     */
+    public function getAvailableDates($itemName)
+    {
+        $usedPeriods = DB::table('prediksi as p')
+            ->join('detail_prediksi as dp', 'p.id_prediksi', '=', 'dp.id_prediksi')
+            ->where('dp.nama_item', $itemName)
+            ->select('p.tanggal_dari', 'p.tanggal_sampai')
+            ->orderBy('p.tanggal_dari')
+            ->get();
 
-
-
+        return response()->json([
+            'item_name' => $itemName,
+            'used_periods' => $usedPeriods
+        ]);
+    }
+    /**
+ * Hapus prediksi berdasarkan ID
+ */
+public function deletePrediction(Request $request)
+{
+    $request->validate([
+        'id' => 'required'
+    ]);
+    
+    try {
+        $id = $request->input('id');
+        
+        // Hapus prefix 'PRD-' jika ada
+        $cleanId = str_replace('PRD-', '', strtoupper($id));
+        
+        // Validasi bahwa $cleanId adalah numeric
+        if (!is_numeric($cleanId)) {
+            return response()->json(['error' => 'Invalid prediction ID format'], 400);
+        }
+        
+        $prediksi = Prediksi::find(intval($cleanId));
+        
+        if (!$prediksi) {
+            return response()->json(['error' => 'Prediction not found'], 404);
+        }
+        
+        // Gunakan transaction untuk memastikan semua data terhapus
+        DB::transaction(function () use ($prediksi) {
+            // Hapus data prediksi terlebih dahulu
+            DataPrediksi::where('id_prediksi', $prediksi->id_prediksi)->delete();
+            
+            // Hapus detail prediksi
+            DetailPrediksi::where('id_prediksi', $prediksi->id_prediksi)->delete();
+            
+            // Hapus prediksi utama
+            $prediksi->delete();
+        });
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Prediksi berhasil dihapus'
+        ]);
+        
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => 'Server error: ' . $e->getMessage()
+        ], 500);
+    }
+}
 }

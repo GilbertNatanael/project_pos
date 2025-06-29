@@ -81,6 +81,9 @@
                             <option value="liter" {{ old('satuan_barang') == 'liter' ? 'selected' : '' }}>liter</option>
                             <option value="meter" {{ old('satuan_barang') == 'meter' ? 'selected' : '' }}>meter</option>
                             <option value="lusin" {{ old('satuan_barang') == 'lusin' ? 'selected' : '' }}>lusin</option>
+                            <option value="batang" {{ old('satuan_barang') == 'batang' ? 'selected' : '' }}>batang</option>
+                            <option value="zak" {{ old('satuan_barang') == 'zak' ? 'selected' : '' }}>zak</option>
+                            <option value="lembar" {{ old('satuan_barang') == 'lembar' ? 'selected' : '' }}>lembar</option>
                         </select>
                         @error('satuan_barang')
                             <div class="text-danger">{{ $message }}</div>

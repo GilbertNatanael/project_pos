@@ -34,8 +34,18 @@ class Prediksi extends Model
     {
         return $this->hasMany(DataPrediksi::class, 'id_prediksi', 'id_prediksi');
     }
-}
 
+    // Accessor untuk menampilkan bulan saja
+    public function getBulanDariAttribute()
+    {
+        return $this->tanggal_dari ? $this->tanggal_dari->format('Y-m') : null;
+    }
+
+    public function getBulanSampaiAttribute()
+    {
+        return $this->tanggal_sampai ? $this->tanggal_sampai->format('Y-m') : null;
+    }
+}
 // app/Models/DetailPrediksi.php
 namespace App\Models;
 

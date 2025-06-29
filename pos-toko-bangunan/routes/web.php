@@ -74,7 +74,8 @@ Route::post('/api/forecast/all', [SalesForecastController::class, 'predictAll'])
 Route::get('/api/forecast/history', [SalesForecastController::class, 'getHistoricalPredictions'])->name('forecast.history');
 Route::get('/api/forecast/{id}', [SalesForecastController::class, 'getPredictionById'])->name('forecast.detail');
 Route::get('/api/forecast/available-dates/{item}', [SalesForecastController::class, 'getAvailableDates'])->name('forecast.available-dates');
-
+// Di web.php atau routes file Anda
+Route::get('/forecast/detail/{id}', [SalesForecastController::class, 'detailPrediksi'])->name('forecast.detail');
 Route::get('/transaksi/detail/{id}', [TransaksiController::class, 'getDetail']);
 
 // Route untuk halaman utama forecast
@@ -83,7 +84,8 @@ Route::get('/forecast', [SalesForecastController::class, 'index'])->name('foreca
 // Route yang sudah ada (pastikan seperti ini)
 Route::get('/cek_prediksi', fn () => view('cek_prediksi'))->name('cek_prediksi');
 Route::get('/cek-prediksi/data', [SalesForecastController::class, 'cekPrediksi']);
-
+Route::post('/cek-prediksi/delete', [SalesForecastController::class, 'deletePrediction'])
+    ->name('prediksi.delete');
 // Route baru untuk detail prediksi
 Route::get('/prediksi/{id_prediksi}', [DetailPrediksiController::class, 'show'])->name('detail-prediksi');
 Route::get('/prediksi/{id_prediksi}/data', [DetailPrediksiController::class, 'getData'])->name('detail-prediksi-data');

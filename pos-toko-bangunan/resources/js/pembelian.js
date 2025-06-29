@@ -6,11 +6,6 @@ document.addEventListener("DOMContentLoaded", function () {
     modal.classList.add('hidden');
     modal.classList.remove('show');
 
-    // HAPUS atau KOMENTARI baris ini yang menyebabkan masalah
-    // setTimeout(() => {
-    //     fetchPembelian();
-    // }, 50); 
-
     // Event: Close button
     document.getElementById('closeModal').addEventListener('click', (e) => {
         e.preventDefault();
@@ -41,6 +36,30 @@ document.addEventListener("DOMContentLoaded", function () {
             const url = e.target.href;
             fetchPembelianFromUrl(url);
         }
+    });
+
+    // Handle form filter dengan AJAX
+    document.getElementById('filterForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const params = new URLSearchParams(formData);
+        const url = this.action + '?' + params.toString();
+        
+        fetchPembelianFromUrl(url);
+    });
+
+    // Handle reset filter
+    document.getElementById('resetFilter').addEventListener('click', function() {
+        // Reset form inputs
+        document.getElementById('nama_barang').value = '';
+        document.getElementById('kategori_id').value = '';
+        document.getElementById('tanggal_dari').value = '';
+        document.getElementById('tanggal_sampai').value = '';
+        
+        // Fetch data tanpa filter
+        const baseUrl = document.getElementById('filterForm').action;
+        fetchPembelianFromUrl(baseUrl);
     });
 
     function hideModal() {
@@ -85,7 +104,7 @@ document.addEventListener("DOMContentLoaded", function () {
     window.hideModalHelper = hideModal;
 });
 
-// Fungsi untuk fetch data dari URL pagination
+// Fungsi untuk fetch data dari URL pagination atau filter
 function fetchPembelianFromUrl(url) {
     fetch(url, {
         headers: {
@@ -163,12 +182,14 @@ function showDetail(idPembelian) {
         detailBody.innerHTML = '';
 
         if (!data || data.length === 0) {
-            detailBody.innerHTML = `<tr><td colspan="4" class="text-center py-4">Tidak ada detail pembelian.</td></tr>`;
+            detailBody.innerHTML = `<tr><td colspan="6" class="text-center py-4">Tidak ada detail pembelian.</td></tr>`;
         } else {
             data.forEach(item => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${item.nama_barang}</td>
+                    <td>${item.merek}</td>
+                    <td>${item.kategori}</td>
                     <td>${item.jumlah}</td>
                     <td>${item.satuan}</td>
                     <td>Rp ${Number(item.subtotal).toLocaleString('id-ID')}</td>
@@ -198,3 +219,44 @@ function showAlert(message, type) {
 }
 
 window.showDetail = showDetail;
+
+// Filter functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const resetButton = document.getElementById('resetFilter');
+    const filterForm = document.getElementById('filterForm');
+    
+    // Reset filter function
+    resetButton.addEventListener('click', function() {
+        // Clear all form inputs
+        const inputs = filterForm.querySelectorAll('input, select');
+        inputs.forEach(input => {
+            if (input.type === 'text' || input.type === 'date') {
+                input.value = '';
+            } else if (input.tagName === 'SELECT') {
+                input.selectedIndex = 0;
+            }
+        });
+        
+        // Submit form to reload without filters
+        filterForm.submit();
+    });
+    
+    // Auto-submit on select change (optional)
+    const selectElements = filterForm.querySelectorAll('select');
+    selectElements.forEach(select => {
+        select.addEventListener('change', function() {
+            // Optional: Auto-submit when category changes
+            // filterForm.submit();
+        });
+    });
+    
+    // Enter key submit for text inputs
+    const textInputs = filterForm.querySelectorAll('input[type="text"]');
+    textInputs.forEach(input => {
+        input.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                filterForm.submit();
+            }
+        });
+    });
+});
